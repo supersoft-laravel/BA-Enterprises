@@ -180,6 +180,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('cases/{case}/finish', [CaseController::class, 'finishAll'])
                 ->name('cases.finish');
 
+            Route::post('cases/{case}/add-service', [CaseController::class, 'addService'])
+                ->name('cases.add-service');
+
+            Route::post('cases/{case}/permit-province-status', [CaseController::class, 'updateProvinceStatus'])
+                ->name('cases.permit-province-status');
+
+            Route::put('cases/{case}/service/{type}', [CaseController::class, 'updateService'])
+                ->name('cases.update-service');
+
+            Route::get('cases/{case}/print', [CaseController::class, 'printCase'])
+                ->name('cases.print');
+
             Route::resource('transfers', TransferController::class);
 
             Route::resource('alterations', AlterationController::class);

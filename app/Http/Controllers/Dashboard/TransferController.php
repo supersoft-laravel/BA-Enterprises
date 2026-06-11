@@ -172,16 +172,16 @@ class TransferController extends Controller
     {
         $this->authorize('update transfer');
         $validator = Validator::make($request->all(), [
-            'from_name' => 'required|string|max:255',
-            'from_s_o' => 'required|string|max:255',
-            'from_nic' => 'required|string|max:255',
-            'from_biometric' => 'required|string|max:255',
-            'to_name' => 'required|string|max:255',
-            'to_s_o' => 'required|string|max:255',
-            'to_nic' => 'required|string|max:255',
-            'to_biometric' => 'required|string|max:255',
-            'engine_no' => 'required|string|max:255',
-            'chassis_no' => 'required|string|max:255',
+            'from_name' => 'nullable|string|max:255',
+            'from_s_o' => 'nullable|string|max:255',
+            'from_nic' => 'nullable|string|max:255',
+            'from_biometric' => 'nullable|string|max:255',
+            'to_name' => 'nullable|string|max:255',
+            'to_s_o' => 'nullable|string|max:255',
+            'to_nic' => 'nullable|string|max:255',
+            'to_biometric' => 'nullable|string|max:255',
+            'engine_no' => 'nullable|string|max:255',
+            'chassis_no' => 'nullable|string|max:255',
             'wheels' => 'nullable|string|max:255',
             'weight' => 'nullable|string|max:255',
             'last_tax' => 'nullable|string|max:255',
@@ -195,19 +195,19 @@ class TransferController extends Controller
             DB::beginTransaction();
 
             $transfer = CaseTransfer::findOrFail($id);
-            $transfer->from_name = $request->from_name;
-            $transfer->from_s_o = $request->from_s_o;
-            $transfer->from_nic = $request->from_nic;
-            $transfer->from_biometric = $request->from_biometric;
-            $transfer->to_name = $request->to_name;
-            $transfer->to_s_o = $request->to_s_o;
-            $transfer->to_nic = $request->to_nic;
-            $transfer->to_biometric = $request->to_biometric;
-            $transfer->engine_no = $request->engine_no;
-            $transfer->chassis_no = $request->chassis_no;
-            $transfer->wheels = $request->wheels;
-            $transfer->weight = $request->weight;
-            $transfer->last_tax = $request->last_tax;
+            $transfer->from_name = $request->from_name ?? '';
+            $transfer->from_s_o = $request->from_s_o ?? '';
+            $transfer->from_nic = $request->from_nic ?? '';
+            $transfer->from_biometric = $request->from_biometric ?? '';
+            $transfer->to_name = $request->to_name ?? '';
+            $transfer->to_s_o = $request->to_s_o ?? '';
+            $transfer->to_nic = $request->to_nic ?? '';
+            $transfer->to_biometric = $request->to_biometric ?? '';
+            $transfer->engine_no = $request->engine_no ?? '';
+            $transfer->chassis_no = $request->chassis_no ?? '';
+            $transfer->wheels = $request->wheels ?? '';
+            $transfer->weight = $request->weight ?? '';
+            $transfer->last_tax = $request->last_tax ?? '';
             $transfer->save();
 
             DB::commit();

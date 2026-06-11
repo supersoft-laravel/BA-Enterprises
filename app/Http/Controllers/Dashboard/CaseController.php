@@ -365,7 +365,7 @@ class CaseController extends Controller
     {
         $this->authorize('update case');
         try {
-            $case = VehicleCase::findOrFail($id);
+            $case = VehicleCase::with('transfer', 'alteration', 'tax', 'insurance', 'permit', 'fitness', 'fileReturn', 'other')->findOrFail($id);
             return view('dashboard.cases.edit', compact('case'));
         } catch (\Throwable $th) {
             // throw $th;
@@ -379,16 +379,23 @@ class CaseController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $this->authorize('update alteration');
+        $this->authorize('update case');
+
         $validator = Validator::make($request->all(), [
-            'vehicle_reg_no'   => 'required|string|max:50|unique:vehicle_cases,vehicle_reg_no,' . $id,
-            'make'             => 'nullable|string|max:100',
-            'year'             => 'nullable|integer|min:1900|max:2100',
-            'submitted_by'     => 'required|string|max:150',
-            'mobile_no'        => 'required|string|max:20',
-            'submission_date'  => 'required|date',
-            'tentative_return_date' => 'nullable|date|after_or_equal:submission_date',
-            'case_refer_to'    => 'required|in:Karachi,Lasbella,Quetta,Peshawar,Gilgit,Punjab,Other',
+            'city'          => 'nullable|string|max:255',
+            'vehicle_no'    => 'nullable|string|max:255',
+            'new_vehicle_no'=> 'nullable|string|max:255',
+            'vehicle_make'  => 'nullable|string|max:255',
+            'vehicle_model' => 'nullable|string|max:255',
+            'engine_no'     => 'nullable|string|max:255',
+            'chassis_no'    => 'nullable|string|max:255',
+            'party_name'    => 'nullable|string|max:255',
+            'party_mobile'  => 'nullable|string|max:50',
+            'vendor_name'   => 'nullable|string|max:255',
+            'vendor_mobile' => 'nullable|string|max:50',
+            'case_date'     => 'nullable|date',
+            'comment'       => 'nullable|string',
+            'status'        => 'required|in:open,closed',
         ]);
 
         if ($validator->fails()) {
@@ -401,25 +408,31 @@ class CaseController extends Controller
             $case = VehicleCase::findOrFail($id);
 
             $case->update([
-                'vehicle_reg_no'        => $request->vehicle_reg_no,
-                'make'                  => $request->make,
-                'year'                  => $request->year,
-                'submitted_by'          => $request->submitted_by,
-                'mobile_no'             => $request->mobile_no,
-                'submission_date'       => $request->submission_date,
-                'tentative_return_date' => $request->tentative_return_date,
-                'case_refer_to'         => $request->case_refer_to,
+                'city'          => $request->city,
+                'vehicle_no'    => $request->vehicle_no,
+                'new_vehicle_no'=> $request->new_vehicle_no,
+                'vehicle_make'  => $request->vehicle_make,
+                'vehicle_model' => $request->vehicle_model,
+                'engine_no'     => $request->engine_no,
+                'chassis_no'    => $request->chassis_no,
+                'party_name'    => $request->input('party_name') ?? '',
+                'party_mobile'  => $request->input('party_mobile') ?? '',
+                'vendor_name'   => $request->input('vendor_name'),
+                'vendor_mobile' => $request->input('vendor_mobile'),
+                'case_date'     => $request->case_date,
+                'comment'       => $request->comment,
+                'status'        => $request->status,
             ]);
 
             DB::commit();
+
             return redirect()
                 ->route('dashboard.cases.show', $case->id)
-                ->with('success', 'Basic details updated successfully!');
+                ->with('success', 'Case updated successfully!');
         } catch (\Throwable $th) {
             DB::rollBack();
             Log::error('Case Update Failed', ['error' => $th->getMessage()]);
-            return redirect()->back()->with('error', "Something went wrong! Please try again later");
-            throw $th;
+            return redirect()->back()->with('error', 'Something went wrong! Please try again later.');
         }
     }
 
@@ -475,22 +488,26 @@ class CaseController extends Controller
     public function storeCaseViaApi(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'common.city'   => 'required|string|max:255',
-            'common.vehicleNo' => 'required|string|max:255',
-            'common.partyName' => 'required|string|max:255',
-            'common.partyMobile' => 'nullable|string|max:255',
+            'common.city'        => 'required|string|max:255',
+            'common.vehicleNo'      => 'nullable|string|max:255',
+            'common.newVehicleNo'   => 'nullable|string|max:255',
+            'common.partyName'      => 'nullable|string|max:255',
+            'common.partyMobile'    => 'nullable|string|max:255',
+            'common.vendorName'     => 'nullable|string|max:255',
+            'common.vendorMobile'   => 'nullable|string|max:255',
+            'common.alterationType' => 'nullable|string|max:100',
             'common.vehicleMake' => 'nullable|string|max:255',
-            'common.vehicleModel' => 'nullable|string|max:255',
-            'common.engineNo' => 'nullable|string|max:255',
-            'common.chassisNo' => 'nullable|string|max:255',
-            'common.date' => 'required|date',
-            'common.comment' => 'nullable|string',
-            'services' => 'required|array',
-            'totals' => 'required|array',
-            'totals.totalAmount' => 'required|numeric',
-            'totals.receivedAmount' => 'required|numeric',
+            'common.vehicleModel'=> 'nullable|string|max:255',
+            'common.engineNo'    => 'nullable|string|max:255',
+            'common.chassisNo'   => 'nullable|string|max:255',
+            'common.date'        => 'nullable|date',
+            'common.comment'     => 'nullable|string',
+            'services'           => 'required|array',
+            'totals'             => 'required|array',
+            'totals.totalAmount'     => 'required|numeric',
+            'totals.receivedAmount'  => 'required|numeric',
             'totals.remainingAmount' => 'required|numeric',
-            'submittedAt' => 'nullable|date',
+            'submittedAt'        => 'nullable|date',
         ]);
 
         if ($validator->fails()) {
@@ -500,17 +517,31 @@ class CaseController extends Controller
         try {
             DB::beginTransaction();
 
+            // Normalize date to YYYY-MM-DD regardless of what format arrives
+            $rawDate = $request->input('common.date');
+            $safeDate = null;
+            if ($rawDate) {
+                try {
+                    $safeDate = \Carbon\Carbon::parse($rawDate)->format('Y-m-d');
+                } catch (\Exception $e) {
+                    $safeDate = null;
+                }
+            }
+
             // 1. Create the vehicle case
             $vehicleCase = VehicleCase::create([
                 'city' => $request->input('common.city'),
                 'vehicle_no' => $request->input('common.vehicleNo'),
+                'new_vehicle_no' => $request->input('common.newVehicleNo'),
                 'vehicle_make' => $request->input('common.vehicleMake'),
                 'vehicle_model' => $request->input('common.vehicleModel'),
                 'engine_no' => $request->input('common.engineNo'),
                 'chassis_no' => $request->input('common.chassisNo'),
-                'party_name' => $request->input('common.partyName'),
-                'party_mobile' => $request->input('common.partyMobile'),
-                'case_date' => $request->input('common.date'),
+                'party_name'    => $request->input('common.partyName') ?? '',
+                'party_mobile'  => $request->input('common.partyMobile') ?? '',
+                'vendor_name'   => $request->input('common.vendorName'),
+                'vendor_mobile' => $request->input('common.vendorMobile'),
+                'case_date' => $safeDate,
                 'comment' => $request->input('common.comment'),
                 'submitted_at' => $request->has('submittedAt')
                     ? date('Y-m-d H:i:s', strtotime($request->input('submittedAt')))
@@ -537,15 +568,16 @@ class CaseController extends Controller
             // 3. Process services and create billing items
             $services = $request->input('services', []);
             foreach ($services as $service) {
-                // Create billing item
+                // Create billing item (service_date defaults to the case date)
                 BillingItem::create([
-                    'billing_id' => $billing->id,
-                    'item_name' => $service['serviceType'],
-                    'item_amount' => $service['amount'],
+                    'billing_id'   => $billing->id,
+                    'item_name'    => $service['serviceType'],
+                    'item_amount'  => $service['amount'],
+                    'service_date' => $safeDate,
                 ]);
 
                 // Create service-specific records
-                $this->createServiceRecord($vehicleCase->id, $service);
+                $this->createServiceRecord($vehicleCase->id, $service, $request->input('common.alterationType'));
             }
 
             // 4. Create payment record if received amount > 0
@@ -575,27 +607,351 @@ class CaseController extends Controller
     }
 
     /**
+     * Add a new service to an existing case and update billing totals.
+     */
+    public function addService(Request $request, VehicleCase $case)
+    {
+        $this->authorize('update case');
+
+        $validator = Validator::make($request->all(), [
+            'service_type'    => 'required|string|in:Transfer,Alteration,Route Permit,FC,Insurance,Tax,File Return,Others',
+            'amount'          => 'required|numeric|min:0',
+            'service_date'    => 'nullable|date',
+            'from_name'       => 'nullable|string|max:255',
+            'from_s_o'        => 'nullable|string|max:255',
+            'from_nic'        => 'nullable|string|max:255',
+            'to_name'         => 'nullable|string|max:255',
+            'to_s_o'          => 'nullable|string|max:255',
+            'to_nic'          => 'nullable|string|max:255',
+            'alteration_type' => 'nullable|string|max:100',
+            'new_vehicle_no'  => 'nullable|string|max:255',
+            'vehicle_make'    => 'nullable|string|max:255',
+            'vehicle_model'   => 'nullable|string|max:255',
+            'engine_no'       => 'nullable|string|max:255',
+            'chassis_no'      => 'nullable|string|max:255',
+            'rta_pta'         => 'nullable|string|max:50',
+            'province'        => 'nullable|array',
+            'province.*'      => 'nullable|string|max:50',
+            'route_details'   => 'nullable|string',
+            'truck_type'      => 'nullable|string|max:50',
+            'fc_details'      => 'nullable|string',
+            'remarks'         => 'nullable|string',
+            'tax_from'        => 'nullable|string|max:100',
+            'tax_to'          => 'nullable|string|max:100',
+            'other_details'   => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->with('error', $validator->errors()->first());
+        }
+
+        $case->load(['transfer', 'alteration', 'tax', 'insurance', 'permit', 'fitness', 'fileReturn', 'other', 'billing']);
+
+        if (!$case->billing) {
+            return redirect()->back()->with('error', 'No billing record found for this case.');
+        }
+
+        $serviceType = $request->service_type;
+
+        $serviceRelationMap = [
+            'Transfer'     => 'transfer',
+            'Alteration'   => 'alteration',
+            'Route Permit' => 'permit',
+            'FC'           => 'fitness',
+            'Insurance'    => 'insurance',
+            'Tax'          => 'tax',
+            'File Return'  => 'fileReturn',
+            'Others'       => 'other',
+        ];
+
+        $relation = $serviceRelationMap[$serviceType] ?? null;
+        if ($relation && $case->{$relation}) {
+            return redirect()->back()->with('error', "'{$serviceType}' is already added to this case.");
+        }
+
+        // Build details array using the same keys createServiceRecord() expects
+        $details = [];
+        switch ($serviceType) {
+            case 'Transfer':
+            case 'Alteration':
+            case 'File Return':
+                $details = [
+                    'fromName' => $request->input('from_name', ''),
+                    'fromSo'   => $request->input('from_s_o', ''),
+                    'fromNic'  => $request->input('from_nic', ''),
+                    'toName'   => $request->input('to_name', ''),
+                    'toSo'     => $request->input('to_s_o', ''),
+                    'toNic'    => $request->input('to_nic', ''),
+                ];
+                break;
+            case 'Route Permit':
+                $details = [
+                    'rtaPta'   => $request->input('rta_pta', 'RTA'),
+                    'province' => implode(',', $request->input('province', [])),
+                    'details'  => $request->input('route_details'),
+                ];
+                break;
+            case 'FC':
+                $details = [
+                    'truckType' => $request->input('truck_type', 'Truck'),
+                    'fcDetails' => $request->input('fc_details'),
+                ];
+                break;
+            case 'Insurance':
+                $details = ['remarks' => $request->input('remarks')];
+                break;
+            case 'Tax':
+                $details = [
+                    'fromPeriod' => $request->input('tax_from', ''),
+                    'upto'       => $request->input('tax_to', ''),
+                ];
+                break;
+            case 'Others':
+                $details = ['otherDetails' => $request->input('other_details')];
+                break;
+        }
+
+        $amount = (float) $request->amount;
+
+        $serviceDate = null;
+        if ($request->filled('service_date')) {
+            try {
+                $serviceDate = \Carbon\Carbon::parse($request->service_date)->format('Y-m-d');
+            } catch (\Exception $e) {
+                $serviceDate = null;
+            }
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // 1. Create the service-specific record
+            $this->createServiceRecord($case->id, [
+                'serviceType' => $serviceType,
+                'details'     => $details,
+            ], $serviceType === 'Alteration' ? $request->input('alteration_type') : null);
+
+            // 2. Create billing item with service date
+            BillingItem::create([
+                'billing_id'   => $case->billing->id,
+                'item_name'    => $serviceType,
+                'item_amount'  => $amount,
+                'service_date' => $serviceDate,
+            ]);
+
+            // 3. Recalculate billing totals — paid_amount and payments never touched
+            $billing      = $case->billing()->lockForUpdate()->firstOrFail();
+            $newTotal     = $billing->total_amount + $amount;
+            $newRemaining = $newTotal - $billing->paid_amount;
+
+            $newStatus = 'unpaid';
+            if ($billing->paid_amount >= $newTotal) {
+                $newStatus = 'paid';
+            } elseif ($billing->paid_amount > 0) {
+                $newStatus = 'partial';
+            }
+
+            $billing->update([
+                'total_amount'     => $newTotal,
+                'remaining_amount' => $newRemaining,
+                'status'           => $newStatus,
+            ]);
+
+            // Update any previously empty vehicle fields (Transfer / Alteration only)
+            if (in_array($serviceType, ['Transfer', 'Alteration'])) {
+                $vehicleUpdates = [];
+                foreach (['new_vehicle_no', 'vehicle_make', 'vehicle_model', 'engine_no', 'chassis_no'] as $field) {
+                    if ($request->filled($field) && empty($case->{$field})) {
+                        $vehicleUpdates[$field] = $request->input($field);
+                    }
+                }
+                if (!empty($vehicleUpdates)) {
+                    $case->update($vehicleUpdates);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('dashboard.cases.show', $case->id)
+                ->with('success', "'{$serviceType}' service added. Bill updated to Rs. " . number_format($newTotal, 2) . ".");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Add Service Failed', ['case_id' => $case->id, 'error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Failed to add service. Please try again.');
+        }
+    }
+
+    public function printCase(VehicleCase $case)
+    {
+        $this->authorize('view case');
+        $case->load('transfer', 'alteration', 'tax', 'insurance', 'permit', 'fitness', 'fileReturn', 'other', 'billing.items', 'billing.payments');
+        return view('dashboard.cases.print', compact('case'));
+    }
+
+    public function updateService(Request $request, VehicleCase $case, string $type)
+    {
+        $this->authorize('update case');
+
+        try {
+            DB::beginTransaction();
+
+            switch ($type) {
+                case 'transfer':
+                    if (!$case->transfer) abort(404);
+                    $case->transfer->update([
+                        'from_name' => $request->input('from_name'),
+                        'from_s_o'  => $request->input('from_s_o'),
+                        'from_nic'  => $request->input('from_nic'),
+                        'to_name'   => $request->input('to_name'),
+                        'to_s_o'    => $request->input('to_s_o'),
+                        'to_nic'    => $request->input('to_nic'),
+                    ]);
+                    break;
+
+                case 'alteration':
+                    if (!$case->alteration) abort(404);
+                    $case->alteration->update([
+                        'alteration_type' => $request->input('alteration_type'),
+                    ]);
+                    break;
+
+                case 'tax':
+                    if (!$case->tax) abort(404);
+                    $case->tax->update([
+                        'tax_from' => $request->input('tax_from'),
+                        'tax_to'   => $request->input('tax_to'),
+                    ]);
+                    break;
+
+                case 'insurance':
+                    if (!$case->insurance) abort(404);
+                    $case->insurance->update([
+                        'details' => $request->input('details'),
+                    ]);
+                    break;
+
+                case 'permit':
+                    if (!$case->permit) abort(404);
+                    $selectedProvinces = array_filter(array_map('trim', (array) $request->input('province', [])));
+                    $provinceStr       = implode(',', $selectedProvinces);
+                    // Remove province_status entries for de-selected provinces
+                    $oldStatus     = $case->permit->province_status ?? [];
+                    $cleanedStatus = array_intersect_key($oldStatus, array_flip($selectedProvinces));
+                    $case->permit->update([
+                        'type'            => $request->input('type'),
+                        'province'        => $provinceStr,
+                        'details'         => $request->input('details'),
+                        'province_status' => $cleanedStatus,
+                    ]);
+                    break;
+
+                case 'fitness':
+                    if (!$case->fitness) abort(404);
+                    $case->fitness->update([
+                        'type'    => $request->input('type'),
+                        'details' => $request->input('details'),
+                    ]);
+                    break;
+
+                case 'file-return':
+                    if (!$case->fileReturn) abort(404);
+                    $case->fileReturn->update([
+                        'from_name' => $request->input('from_name'),
+                        'from_s_o'  => $request->input('from_s_o'),
+                        'from_nic'  => $request->input('from_nic'),
+                        'to_name'   => $request->input('to_name'),
+                        'to_s_o'    => $request->input('to_s_o'),
+                        'to_nic'    => $request->input('to_nic'),
+                    ]);
+                    break;
+
+                case 'other':
+                    if (!$case->other) abort(404);
+                    $case->other->update([
+                        'details' => $request->input('details'),
+                    ]);
+                    break;
+
+                default:
+                    abort(404);
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('dashboard.cases.edit', $case->id)
+                ->with('success', ucfirst(str_replace('-', ' ', $type)) . ' details updated successfully!');
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            Log::error('Update Service Failed', ['type' => $type, 'case_id' => $case->id, 'error' => $th->getMessage()]);
+            return redirect()->back()->with('error', 'Failed to update. Please try again.');
+        }
+    }
+
+    public function updateProvinceStatus(Request $request, VehicleCase $case)
+    {
+        $this->authorize('update case');
+
+        $permit = $case->permit;
+        if (!$permit) {
+            if ($request->expectsJson()) return response()->json(['error' => 'No route permit found.'], 404);
+            return redirect()->back()->with('error', 'No route permit found for this case.');
+        }
+
+        $province = $request->input('province');
+        $status   = $request->input('status');
+
+        if (!in_array($status, ['incomplete', 'complete'])) {
+            if ($request->expectsJson()) return response()->json(['error' => 'Invalid status value.'], 422);
+            return redirect()->back()->with('error', 'Invalid status value.');
+        }
+
+        $current            = $permit->province_status ?? [];
+        $current[$province] = $status;
+
+        $permit->update(['province_status' => $current]);
+
+        if ($request->expectsJson()) return response()->json(['success' => true]);
+        return redirect()->back()->with('success', "Province '{$province}' marked as {$status}.");
+    }
+
+    /**
      * Create service-specific record based on service type
      */
-    private function createServiceRecord($caseId, $service)
+    private function createServiceRecord($caseId, $service, $alterationType = null)
     {
         $serviceType = strtolower(str_replace(' ', '_', $service['serviceType']));
         $details = $service['details'];
 
         switch ($serviceType) {
-            case 'transfer':
             case 'alteration':
+                CaseAlteration::create([
+                    'vehicle_case_id' => $caseId,
+                    'alteration_type' => $alterationType,
+                    'from_name'       => $details['fromName'] ?? '',
+                    'from_s_o'        => $details['fromSo']   ?? '',
+                    'from_nic'        => $details['fromNic']  ?? '',
+                    'to_name'         => $details['toName']   ?? '',
+                    'to_s_o'          => $details['toSo']     ?? '',
+                    'to_nic'          => $details['toNic']    ?? '',
+                ]);
+                break;
+
+            case 'transfer':
             case 'file_return':
                 $modelClass = $this->getServiceModelClass($serviceType);
                 if ($modelClass) {
                     $modelClass::create([
                         'vehicle_case_id' => $caseId,
-                        'from_name' => $details['fromName'] ?? null,
-                        'from_s_o' => $details['fromSo'] ?? null,
-                        'from_nic' => $details['fromNic'] ?? null,
-                        'to_name' => $details['toName'] ?? null,
-                        'to_s_o' => $details['toSo'] ?? null,
-                        'to_nic' => $details['toNic'] ?? null,
+                        'from_name' => $details['fromName'] ?? '',
+                        'from_s_o'  => $details['fromSo']   ?? '',
+                        'from_nic'  => $details['fromNic']  ?? '',
+                        'to_name'   => $details['toName']   ?? '',
+                        'to_s_o'    => $details['toSo']     ?? '',
+                        'to_nic'    => $details['toNic']    ?? '',
                     ]);
                 }
                 break;
@@ -603,8 +959,9 @@ class CaseController extends Controller
             case 'route_permit':
                 CasePermit::create([
                     'vehicle_case_id' => $caseId,
-                    'type' => $details['rtaPta'] ?? 'Others',
-                    'details' => $details['details'] ?? null,
+                    'type'     => $details['rtaPta']   ?? null,
+                    'province' => $details['province'] ?? null,
+                    'details'  => $details['details']  ?? null,
                 ]);
                 break;
 
