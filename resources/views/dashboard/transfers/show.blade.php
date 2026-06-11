@@ -29,7 +29,7 @@
                 <div class="d-flex justify-content-between mb-4">
                     <div>
                         <strong>Receipt No:</strong> TR-{{ str_pad($transfer->id, 6, '0', STR_PAD_LEFT) }}<br>
-                        <strong>Date:</strong> {{ now()->format('d F, Y') }}
+                        <strong>Date:</strong> {{ now()->format('d/m/Y') }}
                     </div>
                     <div class="text-end">
                         <strong>Case No:</strong> {{ $transfer->vehicleCase->case_no }}<br>

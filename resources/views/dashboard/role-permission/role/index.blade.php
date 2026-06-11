@@ -113,7 +113,7 @@
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
                                         <td>{{ Str::title(str_replace('-', ' ', $allRole->name)) }}</td>
-                                        <td>{{ $allRole->created_at->format('Y-m-d') }}</td>
+                                        <td>{{ $allRole->created_at->format('d/m/Y') }}</td>
                                         @canany(['delete role', 'update role'])
                                             <td class="d-flex">
                                                 @canany(['delete role'])
@@ -171,7 +171,7 @@
             });
             var editRoleRoute = "{{ route('dashboard.roles.edit', ':roleId') }}";
             var updateRoleRoute = "{{ route('dashboard.roles.update', ':roleId') }}";
-    
+
             function fetchRoleData(roleId) {
                 var url = editRoleRoute.replace(':roleId', roleId);
                 $.ajax({
@@ -207,6 +207,6 @@
             }
         });
     </script>
-    
+
 
 @endsection

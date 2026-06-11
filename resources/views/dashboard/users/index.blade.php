@@ -14,8 +14,8 @@
         }
 
         .modal-card{
-            background: transparent !important; 
-            border: none !important; 
+            background: transparent !important;
+            border: none !important;
             box-shadow: none !important;
         }
     </style>
@@ -143,7 +143,7 @@
                                 <td>{{ $user->username }}</td>
                                 <td>{{ $user->email }}</td>
                                 <td>{{ Str::title(str_replace('-', ' ', $user->getRoleNames()->first())) }}</td>
-                                <td>{{ $user->created_at->format('Y-m-d') }}</td>
+                                <td>{{ $user->created_at->format('d/m/Y') }}</td>
                                 <td>
                                     <span
                                         class="badge me-4 bg-label-{{ $user->is_active == 'active' ? 'success' : 'danger' }}">{{ ucfirst($user->is_active) }}</span>
@@ -260,8 +260,8 @@
                             }
                             if (isModal) {
                                 // ✅ Update Modal User Info
-                                var profileImage = user.profile_image 
-                                    ? '{{ asset("") }}' + user.profile_image 
+                                var profileImage = user.profile_image
+                                    ? '{{ asset("") }}' + user.profile_image
                                     : '{{ asset("assets/img/default/user.png") }}';
                                 $('#user-info img').attr('src', profileImage);
                                 $('#user-info .user-info h5').text(user.full_name ? user.full_name :
@@ -297,7 +297,7 @@
                                 if (user.github_url) {
                                     socialLinks += `<a href="${user.github_url}" target="_blank" style="color: inherit;"><i class="fab fa-github fa-lg"></i></a>`;
                                 }
-                                
+
                                 $('#modalSocialIcons').html(socialLinks); // Update social icons container
 
                                 $('.edit-loader').hide();

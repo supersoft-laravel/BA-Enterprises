@@ -41,12 +41,12 @@
 
                     <div class="col-md-3">
                         <strong>Date:</strong><br>
-                        {{ \Carbon\Carbon::parse($permit->permit_date)->format('d M Y') }}
+                        {{ \Carbon\Carbon::parse($permit->permit_date)->format('d/m/Y') }}
                     </div>
 
                     <div class="col-md-3">
                         <strong>Created At:</strong><br>
-                        {{ $permit->created_at->format('d M Y H:i') }}
+                        {{ $permit->created_at->format('d/m/Y H:i') }}
                     </div>
                 </div>
 

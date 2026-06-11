@@ -43,7 +43,7 @@
                                 <td>{{ $user->name }}</td>
                                 <td>{{ $user->email }}</td>
                                 <td>{{ Str::title(str_replace('-', ' ', $user->getRoleNames()->first())) }}</td>
-                                <td>{{ $user->deleted_at->format('Y-m-d') }}</td>
+                                <td>{{ $user->deleted_at->format('d/m/Y') }}</td>
                                 <td>
                                     <span class="badge me-4 bg-label-{{ $user->is_active == 'active' ? 'success' : 'danger' }}">{{ ucfirst($user->is_active) }}</span>
                                 </td>

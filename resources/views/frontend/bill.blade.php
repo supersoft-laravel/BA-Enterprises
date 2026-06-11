@@ -279,7 +279,7 @@
             <div class="text-right">
                 <strong>Bill No:</strong> #{{ $billing->bill_no ?? $billing->id }}<br>
                 {{-- <strong>Case No:</strong> #{{ $billing->vehicleCase->case_no ?? 'N/A' }}<br> --}}
-                <strong>Date:</strong> {{ \Carbon\Carbon::parse($billing->billing_date)->format('d M Y') }}<br>
+                <strong>Date:</strong> {{ \Carbon\Carbon::parse($billing->billing_date)->format('d/m/Y') }}<br>
                 <strong>Customer:</strong> {{ $billing->vehicleCase->party_name ?? 'N/A' }}<br>
                 <strong>Vehicle Regd:</strong> {{ $billing->vehicleCase->vehicle_no ?? 'N/A' }}
             </div>
@@ -298,7 +298,7 @@
                 @foreach ($billing->items as $item)
                     <tr>
                         <td>{{ $item->item_name }}</td>
-                        <td>{{ \Carbon\Carbon::parse($billing->billing_date)->format('d M Y') }}</td>
+                        <td>{{ $item->service_date ? \Carbon\Carbon::parse($item->service_date)->format('d/m/Y') : '—' }}</td>
                         <td class="text-right">{{ \App\Helpers\Helper::formatCurrency($item->item_amount) }}</td>
                     </tr>
                 @endforeach
@@ -340,7 +340,7 @@
                     <tbody>
                         @foreach($payments as $payment)
                             <tr>
-                                <td>{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') : 'N/A' }}</td>
+                                <td>{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d/m/Y') : 'N/A' }}</td>
                                 <td>
                                     <span class="payment-method-badge">
                                         {{ ucfirst(str_replace('_', ' ', $payment->payment_method ?? 'N/A')) }}

@@ -28,7 +28,7 @@
                             <th>{{ __('Sr.') }}</th>
                             <th>{{ __('Bill No') }}</th>
                             <th>{{ __('Vehicle No') }}</th>
-                            <th>{{ __('Party Name') }}</th>
+                            <th>{{ __('Customer Name') }}</th>
                             <th>{{ __('Amount') }}</th>
                             <th>{{ __('Date') }}</th>
                             <th>{{ __('Method') }}</th>
@@ -43,7 +43,7 @@
                                 <td>{{ $payment->billing->vehicleCase->vehicle_no ?? 'N/A' }}</td>
                                 <td>{{ $payment->billing->vehicleCase->party_name ?? 'N/A' }}</td>
                                 <td>{{ \App\Helpers\Helper::formatCurrency($payment->amount) }}</td>
-                                <td>{{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}</td>
+                                <td>{{ \Carbon\Carbon::parse($payment->payment_date)->format('d/m/Y') }}</td>
                                 <td>{{ ucfirst($payment->payment_method) }}</td>
                                 @canany(['delete payment', 'update payment'])
                                     <td class="d-flex">

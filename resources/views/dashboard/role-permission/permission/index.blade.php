@@ -39,7 +39,7 @@
                                     <span class="badge bg-secondary">{{ __('No Roles Assigned') }}</span>
                                 @endif
                             </td>
-                            <td>{{ $permission->created_at->format('Y-m-d') }}</td>
+                            <td>{{ $permission->created_at->format('d/m/Y') }}</td>
                             {{-- <td>
                                 <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
                                     Edit
