@@ -39,7 +39,7 @@
                                 <td>{{ $index + 1 }}</td>
                                 <td>{{ $user->name }}</td>
                                 <td>{{ $user->father_name }}</td>
-                                <td>{{ $user->created_at->format('d M Y') }}</td>
+                                <td>{{ $user->created_at->format('d/m/Y') }}</td>
                                 <td>
                                     <span
                                         class="badge me-4 bg-label-{{ $user->is_active == 'active' ? 'success' : 'danger' }}">{{ ucfirst($user->is_active) }}</span>

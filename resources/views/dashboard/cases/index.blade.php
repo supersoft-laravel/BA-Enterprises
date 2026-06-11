@@ -41,7 +41,8 @@
                         <tr>
                             <th>{{ __('Sr.') }}</th>
                             <th>{{ __('Reg. No.') }}</th>
-                            <th>{{ __('Party Name') }}</th>
+                            <th>{{ __('Customer Name') }}</th>
+                            <th>{{ __('Vendor Name') }}</th>
                             <th>{{ __('City') }}</th>
                             <th>{{ __('Status') }}</th>
                             @canany(['delete case', 'update case', 'view case'])<th>{{ __('Action') }}</th>@endcan
@@ -53,26 +54,28 @@
                                 <td>{{ $index + 1 }}</td>
                                 <td>{{ $case->vehicle_no }}</td>
                                 <td>{{ $case->party_name }}</td>
+                                <td>{{ $case->vendor_name ?? '—' }}</td>
                                 <td>{{ ucfirst($case->city) }}</td>
                                 <td>
                                     <span
-                                        class="badge me-4 bg-label-{{ $case->status == 'closed' ? 'success' : 'warning' }}">{{ ucfirst($case->status) }}</span>
+                                        class="badge me-4 bg-label-{{ $case->status === 'open' ? 'success' : 'danger' }}">{{ ucfirst($case->status) }}</span>
                                 </td>
                                 @canany(['delete case', 'update case', 'view case'])
                                     <td class="d-flex">
-                                        {{-- @canany(['delete case'])
-                                            <form action="{{ route('dashboard.cases.destroy', $case->id) }}" method="POST">
+                                        @canany(['delete case'])
+                                            <form class="case-delete-form" action="{{ route('dashboard.cases.destroy', $case->id) }}" method="POST">
                                                 @method('DELETE')
                                                 @csrf
-                                                <a href="#" type="submit"
-                                                    class="btn btn-icon btn-text-danger waves-effect waves-light rounded-pill delete-record delete_confirmation"
+                                                <a href="#"
+                                                    class="btn btn-icon btn-text-danger waves-effect waves-light rounded-pill case-delete-btn"
                                                     data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    title="{{ __('Delete Case') }}">
+                                                    title="{{ __('Delete Case') }}"
+                                                    data-vehicle="{{ $case->vehicle_no ?? 'this case' }}">
                                                     <i class="ti ti-trash ti-md"></i>
                                                 </a>
                                             </form>
-                                        @endcan --}}
-                                        {{-- @canany(['update case'])
+                                        @endcan
+                                        @canany(['update case'])
                                             <span class="text-nowrap">
                                                 <a href="{{ route('dashboard.cases.edit', $case->id) }}"
                                                     class="btn btn-icon btn-text-primary waves-effect waves-light rounded-pill me-1"
@@ -81,7 +84,7 @@
                                                     <i class="ti ti-edit ti-md"></i>
                                                 </a>
                                             </span>
-                                        @endcan --}}
+                                        @endcan
                                         @canany(['view case'])
                                             <span class="text-nowrap">
                                                 <a href="{{ route('dashboard.cases.show', $case->id) }}"
@@ -104,10 +107,40 @@
 @endsection
 
 @section('script')
-    {{-- <script src="{{asset('assets/js/app-user-list.js')}}"></script> --}}
     <script>
         $(document).ready(function() {
-            //
+            $(document).on('click', '.case-delete-btn', function(e) {
+                e.preventDefault();
+                const form   = $(this).closest('.case-delete-form');
+                const vehicle = $(this).data('vehicle');
+                Swal.fire({
+                    title: 'Delete Case?',
+                    html: `<p>You are about to delete <strong>${vehicle}</strong>.</p>
+                           <div class="alert alert-danger text-start mt-2 mb-0 py-2" style="font-size:0.85rem;">
+                               <i class="ti ti-alert-triangle me-1"></i>
+                               <strong>This will permanently delete:</strong>
+                               <ul class="mb-0 mt-1">
+                                   <li>The case and all service details</li>
+                                   <li>The linked bill and all billing items</li>
+                                   <li>All payments recorded against this bill</li>
+                               </ul>
+                           </div>
+                           <p class="mt-2 mb-0 text-danger fw-bold">This cannot be undone.</p>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete everything',
+                    cancelButtonText: 'Cancel',
+                    customClass: {
+                        confirmButton: 'btn btn-danger me-3 waves-effect waves-light',
+                        cancelButton:  'btn btn-label-secondary waves-effect waves-light'
+                    },
+                    buttonsStyling: false
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
         });
     </script>
 @endsection
