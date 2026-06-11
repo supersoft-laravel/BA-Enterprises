@@ -41,12 +41,12 @@
 
                     <div class="col-md-3">
                         <strong>Date:</strong><br>
-                        {{ \Carbon\Carbon::parse($alteration->alteration_date)->format('d M Y') }}
+                        {{ \Carbon\Carbon::parse($alteration->alteration_date)->format('d/m/Y') }}
                     </div>
 
                     <div class="col-md-3">
                         <strong>Created At:</strong><br>
-                        {{ $alteration->created_at->format('d M Y H:i') }}
+                        {{ $alteration->created_at->format('d/m/Y H:i') }}
                     </div>
                 </div>
 

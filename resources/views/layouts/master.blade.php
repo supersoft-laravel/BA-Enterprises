@@ -29,17 +29,16 @@
                 <!-- Content wrapper -->
                 <div class="content-wrapper">
                     <div class="container-xxl flex-grow-1 container-p-y">
-                        <!-- Basic Breadcrumb -->
-                        <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb">
-                                <li class="breadcrumb-item">
-                                    <a href="{{ route('dashboard') }}">{{ __('Dashboard') }}</a>
-                                </li>
-                                @yield('breadcrumb-items')
-                            </ol>
-                        </nav>
-
-                        <!-- Basic Breadcrumb -->
+                        <!-- Back Button -->
+                        <div class="mb-3" id="global-back-wrapper">
+                            <button id="global-back-btn"
+                                style="background:#2d2d3f; color:#fff; border:none; border-radius:50px; padding:5px 16px; font-size:0.8rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background 0.15s;"
+                                onmouseover="this.style.background='#1a1a2e'"
+                                onmouseout="this.style.background='#2d2d3f'">
+                                &#8592; Back
+                            </button>
+                        </div>
+                        <!-- / Back Button -->
 
                         @yield('content')
                     </div>
@@ -251,6 +250,40 @@
             // Fetch notifications on page load
             fetchNotifications();
         });
+    </script>
+    <script>
+    (function () {
+        var path = window.location.pathname.replace(/\/$/, '');
+        var wrapper = document.getElementById('global-back-wrapper');
+        var btn     = document.getElementById('global-back-btn');
+        if (!wrapper || !btn) return;
+
+        // Hide on dashboard home
+        if (path === '/dashboard' || path === '' || path === '/') {
+            wrapper.style.display = 'none';
+            return;
+        }
+
+        var segments = path.replace(/^\//, '').split('/').filter(Boolean);
+        var backUrl;
+
+        if (segments.length <= 1) {
+            // /profile, /settings etc. → dashboard
+            backUrl = '/dashboard';
+        } else if (segments[0] === 'dashboard' && segments.length === 2) {
+            // /dashboard/cases, /dashboard/billings, /dashboard/payments → dashboard
+            backUrl = '/dashboard';
+        } else if (segments[0] === 'dashboard' && segments.length >= 3) {
+            // /dashboard/cases/5, /dashboard/cases/5/edit → /dashboard/cases
+            backUrl = '/' + segments[0] + '/' + segments[1];
+        } else {
+            backUrl = '/dashboard';
+        }
+
+        btn.addEventListener('click', function () {
+            window.location.href = backUrl;
+        });
+    })();
     </script>
 </body>
 

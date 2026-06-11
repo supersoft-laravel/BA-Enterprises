@@ -15,10 +15,12 @@
         <div class="card">
             <div class="card-header">
                 @canany(['create billing'])
-                    <a href="{{ route('dashboard.billings.create') }}" class="add-new btn btn-primary waves-effect waves-light">
+                    <button class="add-new btn btn-primary waves-effect waves-light disabled" disabled
+                            data-bs-toggle="tooltip" data-bs-placement="right"
+                            title="Billing is auto-created when a case is submitted from the dashboard.">
                         <i class="ti ti-plus me-0 me-sm-1 ti-xs"></i><span
                             class="d-none d-sm-inline-block">{{ __('Add New Billing') }}</span>
-                    </a>
+                    </button>
                 @endcan
             </div>
             <div class="card-datatable table-responsive">
@@ -27,11 +29,12 @@
                         <tr>
                             <th>{{ __('Sr.') }}</th>
                             <th>{{ __('Vehicle No') }}</th>
-                            <th>{{ __('Party Name') }}</th>
+                            <th>{{ __('Customer Name') }}</th>
                             <th>{{ __('Total') }}</th>
+                            <th>{{ __('Remaining') }}</th>
                             <th>{{ __('Date') }}</th>
                             <th>{{ __('Status') }}</th>
-                            @canany(['delete billing', 'update billing'])<th>{{ __('Action') }}</th>@endcan
+                            @canany(['update billing', 'view billing'])<th>{{ __('Action') }}</th>@endcan
                         </tr>
                     </thead>
                     <tbody>
@@ -41,8 +44,10 @@
                                 <td>{{ $billing->vehicleCase->vehicle_no ?? 'N/A' }}</td>
                                 <td>{{ $billing->vehicleCase->party_name ?? 'N/A' }}</td>
                                 <td>{{ \App\Helpers\Helper::formatCurrency($billing->total_amount) }}</td>
-
-                                <td>{{ \Carbon\Carbon::parse($billing->billing_date)->format('d M Y') }}</td>
+                                <td class="text-{{ $billing->remaining_amount > 0 ? 'danger' : 'success' }} fw-semibold">
+                                    {{ \App\Helpers\Helper::formatCurrency($billing->remaining_amount) }}
+                                </td>
+                                <td>{{ \Carbon\Carbon::parse($billing->billing_date)->format('d/m/Y') }}</td>
                                 @php
                                     $statusClass = [
                                         'paid' => 'success',
@@ -56,20 +61,8 @@
                                         {{ ucfirst($billing->status) }}
                                     </span>
                                 </td>
-                                @canany(['delete billing', 'update billing', 'view billing'])
+                                @canany(['update billing', 'view billing'])
                                     <td class="d-flex">
-                                        @canany(['delete billing'])
-                                            <form action="{{ route('dashboard.billings.destroy', $billing->id) }}" method="POST">
-                                                @method('DELETE')
-                                                @csrf
-                                                <a href="#" type="submit"
-                                                    class="btn btn-icon btn-text-danger waves-effect waves-light rounded-pill delete-record delete_confirmation"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    title="{{ __('Delete Billing') }}">
-                                                    <i class="ti ti-trash ti-md"></i>
-                                                </a>
-                                            </form>
-                                        @endcan
                                         @canany(['update billing'])
                                             <span class="text-nowrap">
                                                 <a href="{{ route('dashboard.billings.edit', $billing->id) }}"

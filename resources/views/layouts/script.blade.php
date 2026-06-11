@@ -158,7 +158,7 @@
     @if (Session::has('success'))
         Swal.fire({
             title: '{{__("Success!")}}',
-            text: "{{ __(Session::get('success')) }}",
+            text: @json(__(Session::get('success'))),
             icon: 'success',
             timer: 2000,
             showConfirmButton: false

@@ -3,6 +3,7 @@
 @section('title', 'Dashboard')
 
 @section('css')
+<link rel="stylesheet" href="{{ asset('assets/vendor/libs/flatpickr/flatpickr.css') }}">
 <style>
     /* ===== DESIGN TOKENS ===== */
     :root {
@@ -388,7 +389,7 @@
     <div class="totals-card">
         <div class="row g-3 mb-3">
             <div class="col-md-4 total-field">
-                <label class="required-dot mb-1">Total Amount (₨)</label>
+                <label class="mb-1">Total Amount (₨)</label>
                 <input type="number" id="finalTotalAmount" readonly class="form-control total-amount text-primary" style="border-color:#bae6fd;">
             </div>
             <div class="col-md-4 total-field">
@@ -411,6 +412,7 @@
 @endsection
 
 @section('script')
+<script src="{{ asset('assets/vendor/libs/flatpickr/flatpickr.js') }}"></script>
 <script>
 (function () {
     'use strict';
@@ -459,12 +461,16 @@
     let currentServicesRows = [];
     let nextId = 1;
     let syncTimeout = null;
+    let datePicker    = null;
+    let taxFromPicker = null;
+    let taxToPicker   = null;
+    const TAX_FP_OPTS = { dateFormat: 'Y-m-d', altInput: true, altFormat: 'd/m/Y', allowInput: false };
 
     // Persisted vehicle fields — never wiped on re-render
     const vehicleState = {
-        vehicleNo:'', vehicleMake:'', vehicleModel:'',
-        engineNo:'', chassisNo:'', partyName:'',
-        partyMobile:'', date:'', comment:''
+        vehicleNo:'', newVehicleNo:'', vehicleMake:'', vehicleModel:'',
+        engineNo:'', chassisNo:'', partyName:'', partyMobile:'',
+        vendorName:'', vendorMobile:'', date:'', comment:'', alterationType:''
     };
 
     // =========================================================
@@ -483,14 +489,52 @@
 
     function writeVehicleFields() {
         Object.keys(vehicleState).forEach(k => {
+            if (k === 'date') return; // Flatpickr handles date via initDatePicker()
             const el = $('comm_' + k);
             if (!el) return;
-            if (k === 'date' && !vehicleState[k]) {
-                el.value = new Date().toISOString().split('T')[0];
-            } else {
-                el.value = vehicleState[k];
-            }
+            el.value = vehicleState[k];
         });
+    }
+
+    function initDatePicker() {
+        if (datePicker) { datePicker.destroy(); datePicker = null; }
+        const el = document.getElementById('comm_date');
+        if (!el) return;
+
+        const now = new Date();
+        const todayIso = now.getFullYear() + '-' +
+                         String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                         String(now.getDate()).padStart(2, '0');
+
+        datePicker = flatpickr(el, {
+            dateFormat: 'Y-m-d',   // value sent to server
+            altInput: true,
+            altFormat: 'd/m/Y',    // what user sees
+            defaultDate: vehicleState.date || todayIso,
+            allowInput: false,
+            disableMobile: false,
+            onChange: function(selectedDates, dateStr) {
+                vehicleState.date = dateStr; // YYYY-MM-DD kept in state
+            },
+        });
+    }
+
+    function toIsoDate(val) {
+        if (!val) return '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;           // already YYYY-MM-DD
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(val)) {                   // DD/MM/YYYY
+            const [d, m, y] = val.split('/');
+            return `${y}-${m}-${d}`;
+        }
+        try {                                                        // fallback: any parseable string
+            const dt = new Date(val);
+            if (!isNaN(dt.getTime())) {
+                return dt.getFullYear() + '-' +
+                       String(dt.getMonth() + 1).padStart(2, '0') + '-' +
+                       String(dt.getDate()).padStart(2, '0');
+            }
+        } catch (e) {}
+        return '';
     }
 
     // =========================================================
@@ -571,6 +615,9 @@
         const v = (key, placeholder) => `value="${esc(data[key] || '')}"${placeholder ? ` placeholder="${placeholder}"` : ''}`;
         const t = (key, rows, placeholder) => `${esc(data[key] || '')}`;
 
+        // Alteration has no detail block — type is collected in common fields
+        if (serviceType === 'Alteration') return '';
+
         if (TRANSFER_LIKE.has(serviceType)) return `
             <div class="row g-2">
                 <div class="col-md-6"><label class="form-label-sm">From Name</label><input class="form-control detail-fromName" ${v('fromName')}></div>
@@ -581,18 +628,33 @@
                 <div class="col-md-6"><label class="form-label-sm">To NIC No</label><input class="form-control detail-toNic" ${v('toNic')} placeholder="XXXXX-XXXXXXX-X"></div>
             </div>`;
 
-        if (serviceType === 'Route Permit') return `
+        if (serviceType === 'Route Permit') {
+            const _sel = (data.province || '').split(',').map(s => s.trim()).filter(Boolean);
+            const _cb = p => `<div class="form-check form-check-inline me-3">
+                <input type="checkbox" class="form-check-input detail-province-cb" value="${p}" ${_sel.includes(p) ? 'checked' : ''}>
+                <label class="form-check-label" style="font-size:0.82rem;">${p}</label>
+            </div>`;
+            return `
             <div class="row g-2">
                 <div class="col-12"><label class="form-label-sm">Route Details</label><textarea class="form-control detail-details" rows="2">${t('details')}</textarea></div>
+                <div class="col-12">
+                    <label class="form-label-sm d-block mb-1">Province <span style="font-size:0.75rem;color:#94a3b8;">(select one or more, or leave blank for none)</span></label>
+                    <div class="d-flex flex-wrap gap-1">
+                        ${_cb('Sindh')}${_cb('Balochistan')}${_cb('Punjab')}${_cb('KPK')}
+                    </div>
+                </div>
                 <div class="col-md-6">
                     <label class="form-label-sm">RTA / PTA</label>
                     <select class="form-select detail-rtaPta">
                         <option value="RTA" ${data.rtaPta === 'RTA' ? 'selected' : ''}>RTA</option>
                         <option value="PTA" ${data.rtaPta === 'PTA' ? 'selected' : ''}>PTA</option>
+                        <option value="RTA to PTA" ${data.rtaPta === 'RTA to PTA' ? 'selected' : ''}>RTA to PTA</option>
+                        <option value="PTA to RTA" ${data.rtaPta === 'PTA to RTA' ? 'selected' : ''}>PTA to RTA</option>
                         <option value="Other" ${data.rtaPta === 'Other' ? 'selected' : ''}>Other</option>
                     </select>
                 </div>
             </div>`;
+        }
 
         if (serviceType === 'FC') return `
             <div class="row g-2">
@@ -645,9 +707,11 @@
                 toNic:g('detail-toNic')
             };
         } else if (st==='Route Permit') {
+            const _checked = Array.from(w.querySelectorAll('input.detail-province-cb:checked')).map(cb => cb.value).join(',');
             row.detailsData = {
-                details:g('detail-details'),
-                rtaPta:g('detail-rtaPta')
+                details:  g('detail-details'),
+                province: _checked,
+                rtaPta:   g('detail-rtaPta')
             };
         } else if (st==='FC') {
             row.detailsData = {
@@ -715,9 +779,17 @@
     function renderDetailSections() {
         const container = $('dynamicDetailsContainer');
         if (!container) return;
+
+        // Destroy any existing Tax pickers before clearing DOM
+        if (taxFromPicker) { taxFromPicker.destroy(); taxFromPicker = null; }
+        if (taxToPicker)   { taxToPicker.destroy();   taxToPicker   = null; }
+
         container.innerHTML = '';
 
         currentServicesRows.forEach(row => {
+            // Alteration has no detail block — its type is in the common fields
+            if (row.serviceType === 'Alteration') return;
+
             const div = document.createElement('div');
             div.className = 'service-detail-block';
             div.id = `details-section-${row.id}`;
@@ -733,19 +805,29 @@
 
             const w = div.querySelector('.details-fields-wrapper');
             const isTransfer = TRANSFER_LIKE.has(row.serviceType);
-            w.querySelectorAll('input, textarea, select').forEach(el => {
-                el.addEventListener('input', () => {
-                    if (isTransfer) {
-                        clearTimeout(syncTimeout);
-                        syncTimeout = setTimeout(() => {
-                            syncRowDetailsFromDOM(row.id);
-                            syncAllTransferRows();
-                        }, 30);
-                    } else {
+            const syncHandler = () => {
+                if (isTransfer) {
+                    clearTimeout(syncTimeout);
+                    syncTimeout = setTimeout(() => {
                         syncRowDetailsFromDOM(row.id);
-                    }
-                });
+                        syncAllTransferRows();
+                    }, 30);
+                } else {
+                    syncRowDetailsFromDOM(row.id);
+                }
+            };
+            w.querySelectorAll('input, textarea, select').forEach(el => {
+                el.addEventListener('input', syncHandler);
+                el.addEventListener('change', syncHandler); // catches checkboxes
             });
+
+            // Init Flatpickr date pickers for Tax period fields
+            if (row.serviceType === 'Tax') {
+                const fromEl = w.querySelector('.detail-fromPeriod');
+                const toEl   = w.querySelector('.detail-upto');
+                if (fromEl) taxFromPicker = flatpickr(fromEl, Object.assign({}, TAX_FP_OPTS, { onChange: () => syncRowDetailsFromDOM(row.id) }));
+                if (toEl)   taxToPicker   = flatpickr(toEl,   Object.assign({}, TAX_FP_OPTS, { onChange: () => syncRowDetailsFromDOM(row.id) }));
+            }
         });
 
         // Remove buttons
@@ -803,14 +885,12 @@
                     const master = getMasterTransferData();
                     row.detailsData = master;
                 } else if (!isTransfer && wasTransfer) {
-                    // Converting from transfer - keep some data if applicable
-                    const oldData = row.detailsData || {};
-                    row.detailsData = {};
-                    // Try to map relevant fields
                     if (newType === 'Route Permit') {
-                        row.detailsData = { details: `From: ${oldData.fromName || ''} To: ${oldData.toName || ''}`, rtaPta: 'RTA' };
+                        row.detailsData = { details: '', province: '', rtaPta: 'RTA' };
                     } else if (newType === 'FC') {
-                        row.detailsData = { truckType: 'Truck', fcDetails: `Transfer from ${oldData.fromName || ''}` };
+                        row.detailsData = { truckType: 'Truck', fcDetails: '' };
+                    } else {
+                        row.detailsData = {};
                     }
                 } else {
                     // Converting between non-transfer services
@@ -873,37 +953,58 @@
     // =========================================================
     function updateCommonFields() {
         const hasTransfer = hasTransferLikeService();
+        const hasAlteration = currentServicesRows.some(r => r.serviceType === 'Alteration');
         const container = $('dynamicCommonFieldsContainer');
         if (!container) return;
 
         // Store current values before re-rendering
         readVehicleFields();
 
+        const alterationTypeField = hasAlteration ? `
+            <div class="col-md-6">
+                <label class="form-label-sm">Alteration Type</label>
+                <select id="comm_alterationType" class="form-select">
+                    <option value="">None</option>
+                    <option value="Body">Body</option>
+                    <option value="Engine">Engine</option>
+                    <option value="Wheel">Wheel</option>
+                    <option value="Weight">Weight</option>
+                </select>
+            </div>` : '';
+
         if (hasTransfer) {
             container.innerHTML = `
-                <div class="col-md-6"><label class="form-label-sm required-dot">Vehicle No</label><input id="comm_vehicleNo" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label-sm">Vehicle No</label><input id="comm_vehicleNo" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label-sm">New Vehicle No</label><input id="comm_newVehicleNo" class="form-control"></div>
                 <div class="col-md-6"><label class="form-label-sm">Vehicle Make</label><input id="comm_vehicleMake" class="form-control"></div>
                 <div class="col-md-6"><label class="form-label-sm">Vehicle Model</label><input id="comm_vehicleModel" class="form-control"></div>
                 <div class="col-md-6"><label class="form-label-sm">Engine No</label><input id="comm_engineNo" class="form-control"></div>
                 <div class="col-md-6"><label class="form-label-sm">Chassis No</label><input id="comm_chassisNo" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label-sm">Party Name</label><input id="comm_partyName" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label-sm">Party Mobile No</label><input id="comm_partyMobile" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label-sm">Date</label><input type="date" id="comm_date" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label-sm">Customer Name</label><input id="comm_partyName" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label-sm">Customer Mobile</label><input id="comm_partyMobile" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label-sm">Vendor Name</label><input id="comm_vendorName" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label-sm">Vendor Mobile</label><input id="comm_vendorMobile" class="form-control"></div>
+                ${alterationTypeField}
+                <div class="col-md-6"><label class="form-label-sm">Date</label><input type="text" id="comm_date" class="form-control" placeholder="DD/MM/YYYY"></div>
                 <div class="col-12"><label class="form-label-sm">Comment / Remarks</label><textarea id="comm_comment" rows="2" class="form-control" placeholder="Any additional comment…"></textarea></div>`;
         } else {
             container.innerHTML = `
-                <div class="col-md-6"><label class="form-label-sm required-dot">Vehicle No</label><input id="comm_vehicleNo" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label-sm">Party Name</label><input id="comm_partyName" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label-sm">Party Mobile No</label><input id="comm_partyMobile" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label-sm">Date</label><input type="date" id="comm_date" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label-sm">Vehicle No</label><input id="comm_vehicleNo" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label-sm">Customer Name</label><input id="comm_partyName" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label-sm">Customer Mobile</label><input id="comm_partyMobile" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label-sm">Vendor Name</label><input id="comm_vendorName" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label-sm">Vendor Mobile</label><input id="comm_vendorMobile" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label-sm">Date</label><input type="text" id="comm_date" class="form-control" placeholder="DD/MM/YYYY"></div>
                 <div class="col-12"><label class="form-label-sm">Comment / Remarks</label><textarea id="comm_comment" rows="2" class="form-control" placeholder="Any additional comment…"></textarea></div>`;
         }
 
         // Restore values after re-rendering
         writeVehicleFields();
+        initDatePicker();
 
         // Add event listeners to save values on input
         Object.keys(vehicleState).forEach(k => {
+            if (k === 'date') return; // Flatpickr onChange handles date
             const el = $('comm_' + k);
             if (el) {
                 el.addEventListener('input', () => readVehicleFields());
@@ -924,7 +1025,7 @@
             // Always use master data if available, otherwise empty object
             row.detailsData = (master && (master.fromName || master.fromNic || master.toName)) ? { ...master } : { fromName:'', fromSo:'', fromNic:'', toName:'', toSo:'', toNic:'' };
         } else if (serviceType === 'Route Permit') {
-            row.detailsData = { details: '', rtaPta: 'RTA' };
+            row.detailsData = { details: '', province: '', rtaPta: 'RTA' };
         } else if (serviceType === 'FC') {
             row.detailsData = { truckType: 'Truck', fcDetails: '' };
         } else if (serviceType === 'Insurance') {
@@ -950,16 +1051,20 @@
         currentServicesRows.forEach(r => syncRowDetailsFromDOM(r.id));
         readVehicleFields();
         const common = {
-            city:        currentCity,
-            vehicleNo:   vehicleState.vehicleNo,
-            vehicleMake: vehicleState.vehicleMake,
+            city:           currentCity,
+            vehicleNo:      vehicleState.vehicleNo,
+            newVehicleNo:   vehicleState.newVehicleNo,
+            vehicleMake:    vehicleState.vehicleMake,
             vehicleModel:vehicleState.vehicleModel,
             engineNo:    vehicleState.engineNo,
             chassisNo:   vehicleState.chassisNo,
-            partyName:   vehicleState.partyName,
-            partyMobile: vehicleState.partyMobile,
-            date:        vehicleState.date,
-            comment:     vehicleState.comment
+            partyName:    vehicleState.partyName,
+            partyMobile:  vehicleState.partyMobile,
+            vendorName:   vehicleState.vendorName,
+            vendorMobile: vehicleState.vendorMobile,
+            date:           toIsoDate(vehicleState.date),
+            comment:        vehicleState.comment,
+            alterationType: vehicleState.alterationType
         };
         const services = currentServicesRows.map(r => ({ id:r.id, serviceType:r.serviceType, amount:r.amount, details:r.detailsData || {} }));
         const totals   = { totalAmount:parseFloat($('finalTotalAmount').value)||0, receivedAmount:parseFloat($('finalReceivedAmount').value)||0, remainingAmount:parseFloat($('finalRemainingAmount').value)||0 };
@@ -1010,7 +1115,7 @@
         if (TRANSFER_LIKE.has(serviceType)) {
             row.detailsData = { fromName:'', fromSo:'', fromNic:'', toName:'', toSo:'', toNic:'' };
         } else if (serviceType === 'Route Permit') {
-            row.detailsData = { details: '', rtaPta: 'RTA' };
+            row.detailsData = { details: '', province: '', rtaPta: 'RTA' };
         } else if (serviceType === 'FC') {
             row.detailsData = { truckType: 'Truck', fcDetails: '' };
         } else if (serviceType === 'Insurance') {
@@ -1059,12 +1164,6 @@
 
 
         $('finalSaveRecordBtn').addEventListener('click', async () => {
-            // Validate
-            if (!$('comm_vehicleNo')?.value.trim()) {
-                alert('Please fill in the Vehicle Number.');
-                return;
-            }
-
             // Collect data
             const data = collectFormData();
 
@@ -1139,11 +1238,11 @@
 
 
     function resetAllFormData() {
-        // Reset all global state
         currentServicesRows = [];
         nextId = 1;
 
-        // Reset vehicle state
+        if (datePicker) { datePicker.destroy(); datePicker = null; }
+
         Object.keys(vehicleState).forEach(key => {
             vehicleState[key] = '';
         });
