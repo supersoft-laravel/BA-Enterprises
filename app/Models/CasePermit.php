@@ -12,6 +12,12 @@ class CasePermit extends Model
     protected $fillable = [
         'vehicle_case_id',
         'type',
+        'province',
         'details',
+        'province_status',
+    ];
+
+    protected $casts = [
+        'province_status' => 'array',
     ];
 }

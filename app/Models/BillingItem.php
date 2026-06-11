@@ -15,5 +15,6 @@ class BillingItem extends Model
         'billing_id',
         'item_name',
         'item_amount',
+        'service_date',
     ];
 }

@@ -29,6 +29,11 @@ class Billing extends Model
         return $this->hasMany(BillingItem::class);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function vehicleCase()
     {
         return $this->belongsTo(VehicleCase::class);

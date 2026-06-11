@@ -15,14 +15,19 @@ class VehicleCase extends Model
         // Common Info
         'city',
         'vehicle_no',
+        'new_vehicle_no',
         'vehicle_make',
         'vehicle_model',
         'engine_no',
         'chassis_no',
 
-        // Party Info
+        // Customer Info
         'party_name',
         'party_mobile',
+
+        // Vendor Info
+        'vendor_name',
+        'vendor_mobile',
 
         // Case Info
         'case_date',
@@ -30,6 +35,9 @@ class VehicleCase extends Model
 
         // Tracking
         'submitted_at',
+
+        // Status
+        'status',
     ];
 
     public function transfer()

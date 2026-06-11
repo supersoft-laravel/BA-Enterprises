@@ -11,6 +11,7 @@ class CaseAlteration extends Model
 
     protected $fillable = [
         'vehicle_case_id',
+        'alteration_type',
 
         // From
         'from_name',
