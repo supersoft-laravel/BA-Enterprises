@@ -29,6 +29,12 @@
                 <!-- Content wrapper -->
                 <div class="content-wrapper">
                     <div class="container-xxl flex-grow-1 container-p-y">
+                        <div class="mb-3" id="global-back-wrapper">
+                            <button id="global-back-btn"
+                                class="btn btn-sm btn-label-secondary waves-effect waves-light">
+                                <i class="ti ti-arrow-left me-1"></i> Back
+                            </button>
+                        </div>
                         @yield('content')
                     </div>
                     <!-- Content -->
@@ -242,35 +248,19 @@
     </script>
     <script>
     (function () {
-        var path = window.location.pathname.replace(/\/$/, '');
+        var path    = window.location.pathname.replace(/\/$/, '');
         var wrapper = document.getElementById('global-back-wrapper');
         var btn     = document.getElementById('global-back-btn');
         if (!wrapper || !btn) return;
 
-        // Hide on dashboard home
-        if (path === '/dashboard' || path === '' || path === '/') {
+        // Hide on root dashboard page
+        if (path === '/dashboard' || path === '/dashboard/stats' || path === '' || path === '/') {
             wrapper.style.display = 'none';
             return;
         }
 
-        var segments = path.replace(/^\//, '').split('/').filter(Boolean);
-        var backUrl;
-
-        if (segments.length <= 1) {
-            // /profile, /settings etc. → dashboard
-            backUrl = '/dashboard';
-        } else if (segments[0] === 'dashboard' && segments.length === 2) {
-            // /dashboard/cases, /dashboard/billings, /dashboard/payments → dashboard
-            backUrl = '/dashboard';
-        } else if (segments[0] === 'dashboard' && segments.length >= 3) {
-            // /dashboard/cases/5, /dashboard/cases/5/edit → /dashboard/cases
-            backUrl = '/' + segments[0] + '/' + segments[1];
-        } else {
-            backUrl = '/dashboard';
-        }
-
         btn.addEventListener('click', function () {
-            window.location.href = backUrl;
+            history.back();
         });
     })();
     </script>
