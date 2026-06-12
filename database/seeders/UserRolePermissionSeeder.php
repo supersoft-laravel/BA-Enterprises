@@ -17,95 +17,95 @@ class UserRolePermissionSeeder extends Seeder
     public function run(): void
     {
         // Create Permissions
-        Permission::create(['name' => 'view role']);
-        Permission::create(['name' => 'create role']);
-        Permission::create(['name' => 'update role']);
-        Permission::create(['name' => 'delete role']);
+        Permission::firstOrCreate(['name' => 'view role']);
+        Permission::firstOrCreate(['name' => 'create role']);
+        Permission::firstOrCreate(['name' => 'update role']);
+        Permission::firstOrCreate(['name' => 'delete role']);
 
-        Permission::create(['name' => 'view permission']);
-        Permission::create(['name' => 'create permission']);
-        Permission::create(['name' => 'update permission']);
-        Permission::create(['name' => 'delete permission']);
+        Permission::firstOrCreate(['name' => 'view permission']);
+        Permission::firstOrCreate(['name' => 'create permission']);
+        Permission::firstOrCreate(['name' => 'update permission']);
+        Permission::firstOrCreate(['name' => 'delete permission']);
 
-        Permission::create(['name' => 'view user']);
-        Permission::create(['name' => 'create user']);
-        Permission::create(['name' => 'update user']);
-        Permission::create(['name' => 'delete user']);
+        Permission::firstOrCreate(['name' => 'view user']);
+        Permission::firstOrCreate(['name' => 'create user']);
+        Permission::firstOrCreate(['name' => 'update user']);
+        Permission::firstOrCreate(['name' => 'delete user']);
 
-        Permission::create(['name' => 'view staff']);
-        Permission::create(['name' => 'create staff']);
-        Permission::create(['name' => 'update staff']);
-        Permission::create(['name' => 'delete staff']);
+        Permission::firstOrCreate(['name' => 'view staff']);
+        Permission::firstOrCreate(['name' => 'create staff']);
+        Permission::firstOrCreate(['name' => 'update staff']);
+        Permission::firstOrCreate(['name' => 'delete staff']);
 
-        Permission::create(['name' => 'view archived user']);
-        Permission::create(['name' => 'create archived user']);
-        Permission::create(['name' => 'update archived user']);
-        Permission::create(['name' => 'delete archived user']);
+        Permission::firstOrCreate(['name' => 'view archived user']);
+        Permission::firstOrCreate(['name' => 'create archived user']);
+        Permission::firstOrCreate(['name' => 'update archived user']);
+        Permission::firstOrCreate(['name' => 'delete archived user']);
 
-        Permission::create(['name' => 'view setting']);
-        Permission::create(['name' => 'create setting']);
-        Permission::create(['name' => 'update setting']);
-        Permission::create(['name' => 'delete setting']);
+        Permission::firstOrCreate(['name' => 'view setting']);
+        Permission::firstOrCreate(['name' => 'create setting']);
+        Permission::firstOrCreate(['name' => 'update setting']);
+        Permission::firstOrCreate(['name' => 'delete setting']);
 
-        Permission::create(['name' => 'view transfer']);
-        Permission::create(['name' => 'create transfer']);
-        Permission::create(['name' => 'update transfer']);
-        Permission::create(['name' => 'delete transfer']);
+        Permission::firstOrCreate(['name' => 'view transfer']);
+        Permission::firstOrCreate(['name' => 'create transfer']);
+        Permission::firstOrCreate(['name' => 'update transfer']);
+        Permission::firstOrCreate(['name' => 'delete transfer']);
 
-        Permission::create(['name' => 'view alteration']);
-        Permission::create(['name' => 'create alteration']);
-        Permission::create(['name' => 'update alteration']);
-        Permission::create(['name' => 'delete alteration']);
+        Permission::firstOrCreate(['name' => 'view alteration']);
+        Permission::firstOrCreate(['name' => 'create alteration']);
+        Permission::firstOrCreate(['name' => 'update alteration']);
+        Permission::firstOrCreate(['name' => 'delete alteration']);
 
-        Permission::create(['name' => 'view tax']);
-        Permission::create(['name' => 'create tax']);
-        Permission::create(['name' => 'update tax']);
-        Permission::create(['name' => 'delete tax']);
+        Permission::firstOrCreate(['name' => 'view tax']);
+        Permission::firstOrCreate(['name' => 'create tax']);
+        Permission::firstOrCreate(['name' => 'update tax']);
+        Permission::firstOrCreate(['name' => 'delete tax']);
 
-        Permission::create(['name' => 'view insurance']);
-        Permission::create(['name' => 'create insurance']);
-        Permission::create(['name' => 'update insurance']);
-        Permission::create(['name' => 'delete insurance']);
+        Permission::firstOrCreate(['name' => 'view insurance']);
+        Permission::firstOrCreate(['name' => 'create insurance']);
+        Permission::firstOrCreate(['name' => 'update insurance']);
+        Permission::firstOrCreate(['name' => 'delete insurance']);
 
-        Permission::create(['name' => 'view permit']);
-        Permission::create(['name' => 'create permit']);
-        Permission::create(['name' => 'update permit']);
-        Permission::create(['name' => 'delete permit']);
+        Permission::firstOrCreate(['name' => 'view permit']);
+        Permission::firstOrCreate(['name' => 'create permit']);
+        Permission::firstOrCreate(['name' => 'update permit']);
+        Permission::firstOrCreate(['name' => 'delete permit']);
 
-        Permission::create(['name' => 'view fitness']);
-        Permission::create(['name' => 'create fitness']);
-        Permission::create(['name' => 'update fitness']);
-        Permission::create(['name' => 'delete fitness']);
+        Permission::firstOrCreate(['name' => 'view fitness']);
+        Permission::firstOrCreate(['name' => 'create fitness']);
+        Permission::firstOrCreate(['name' => 'update fitness']);
+        Permission::firstOrCreate(['name' => 'delete fitness']);
 
-        Permission::create(['name' => 'view invoice']);
-        Permission::create(['name' => 'create invoice']);
-        Permission::create(['name' => 'update invoice']);
-        Permission::create(['name' => 'delete invoice']);
+        Permission::firstOrCreate(['name' => 'view invoice']);
+        Permission::firstOrCreate(['name' => 'create invoice']);
+        Permission::firstOrCreate(['name' => 'update invoice']);
+        Permission::firstOrCreate(['name' => 'delete invoice']);
 
-        Permission::create(['name' => 'view case']);
-        Permission::create(['name' => 'create case']);
-        Permission::create(['name' => 'update case']);
-        Permission::create(['name' => 'delete case']);
+        Permission::firstOrCreate(['name' => 'view case']);
+        Permission::firstOrCreate(['name' => 'create case']);
+        Permission::firstOrCreate(['name' => 'update case']);
+        Permission::firstOrCreate(['name' => 'delete case']);
 
-        Permission::create(['name' => 'view billing']);
-        Permission::create(['name' => 'create billing']);
-        Permission::create(['name' => 'update billing']);
-        Permission::create(['name' => 'delete billing']);
+        Permission::firstOrCreate(['name' => 'view billing']);
+        Permission::firstOrCreate(['name' => 'create billing']);
+        Permission::firstOrCreate(['name' => 'update billing']);
+        Permission::firstOrCreate(['name' => 'delete billing']);
 
-        Permission::create(['name' => 'view payment']);
-        Permission::create(['name' => 'create payment']);
-        Permission::create(['name' => 'update payment']);
-        Permission::create(['name' => 'delete payment']);
+        Permission::firstOrCreate(['name' => 'view payment']);
+        Permission::firstOrCreate(['name' => 'create payment']);
+        Permission::firstOrCreate(['name' => 'update payment']);
+        Permission::firstOrCreate(['name' => 'delete payment']);
 
-        Permission::create(['name' => 'view customer']);
-        Permission::create(['name' => 'create customer']);
-        Permission::create(['name' => 'update customer']);
-        Permission::create(['name' => 'delete customer']);
+        Permission::firstOrCreate(['name' => 'view customer']);
+        Permission::firstOrCreate(['name' => 'create customer']);
+        Permission::firstOrCreate(['name' => 'update customer']);
+        Permission::firstOrCreate(['name' => 'delete customer']);
 
         // Create Roles
-        $superAdminRole = Role::create(['name' => 'super-admin']); //as super-admin
-        $adminRole = Role::create(['name' => 'admin']);
-        $userRole = Role::create(['name' => 'user']);
+        $superAdminRole = Role::firstOrCreate(['name' => 'super-admin']);
+        $adminRole      = Role::firstOrCreate(['name' => 'admin']);
+        $userRole       = Role::firstOrCreate(['name' => 'user']);
 
         // give all permissions to super-admin role.
         $allPermissionNames = Permission::pluck('name')->toArray();
