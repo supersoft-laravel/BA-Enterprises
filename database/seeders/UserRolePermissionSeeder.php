@@ -97,6 +97,11 @@ class UserRolePermissionSeeder extends Seeder
         Permission::create(['name' => 'update payment']);
         Permission::create(['name' => 'delete payment']);
 
+        Permission::create(['name' => 'view customer']);
+        Permission::create(['name' => 'create customer']);
+        Permission::create(['name' => 'update customer']);
+        Permission::create(['name' => 'delete customer']);
+
         // Create Roles
         $superAdminRole = Role::create(['name' => 'super-admin']); //as super-admin
         $adminRole = Role::create(['name' => 'admin']);
@@ -111,6 +116,7 @@ class UserRolePermissionSeeder extends Seeder
         $adminRole->givePermissionTo(['view role']);
         $adminRole->givePermissionTo(['view permission']);
         $adminRole->givePermissionTo(['create user', 'view user', 'update user']);
+        $adminRole->givePermissionTo(['view customer', 'create customer', 'update customer']);
 
 
         // Create User and assign Role to it.
