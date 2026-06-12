@@ -112,6 +112,14 @@
                 </a>
             </li>
         @endcan
+        @canany(['view customer'])
+            <li class="menu-item {{ request()->routeIs('dashboard.customers.*') ? 'active' : '' }}">
+                <a href="{{ route('dashboard.customers.index') }}" class="menu-link">
+                    <i class="menu-icon tf-icons ti ti-address-book"></i>
+                    <div>{{ __('Customers') }}</div>
+                </a>
+            </li>
+        @endcan
         @canany(['view user', 'view archived user', 'view staff'])
             <li
                 class="menu-item {{ request()->routeIs('dashboard.user.*') || request()->routeIs('dashboard.archived-user.*') || request()->routeIs('dashboard.other-users.*') ? 'open' : '' }}">

@@ -29,17 +29,6 @@
                 <!-- Content wrapper -->
                 <div class="content-wrapper">
                     <div class="container-xxl flex-grow-1 container-p-y">
-                        <!-- Back Button -->
-                        <div class="mb-3" id="global-back-wrapper">
-                            <button id="global-back-btn"
-                                style="background:#2d2d3f; color:#fff; border:none; border-radius:50px; padding:5px 16px; font-size:0.8rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background 0.15s;"
-                                onmouseover="this.style.background='#1a1a2e'"
-                                onmouseout="this.style.background='#2d2d3f'">
-                                &#8592; Back
-                            </button>
-                        </div>
-                        <!-- / Back Button -->
-
                         @yield('content')
                     </div>
                     <!-- Content -->

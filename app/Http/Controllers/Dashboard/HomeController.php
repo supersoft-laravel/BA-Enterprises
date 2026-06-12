@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\Billing;
+use App\Models\Customer;
 use App\Models\VehicleCase;
 use App\Models\CaseTransfer;
 use App\Models\CaseAlteration;
@@ -12,6 +13,7 @@ use App\Models\CaseTax;
 use App\Models\CaseInsurance;
 use App\Models\CaseFileReturn;
 use App\Models\CaseOther;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -95,7 +97,9 @@ class HomeController extends Controller
                 ];
             });
 
-        return view('dashboard.index', compact('pendingPayments', 'pendingCases'));
+        $customers = Customer::orderBy('customer_code')->get(['id', 'customer_code', 'name', 'mobile']);
+
+        return view('dashboard.index', compact('pendingPayments', 'pendingCases', 'customers'));
     }
 
     /**
@@ -188,7 +192,36 @@ class HomeController extends Controller
      */
     public function dashboardStatsIndex()
     {
-        return view('dashboard.dashboard-stats');
+        $summaryStats = [
+            'total_transfers'   => CaseTransfer::count(),
+            'total_alterations' => CaseAlteration::count(),
+            'total_permits'     => CasePermit::count(),
+            'active_vehicles'   => VehicleCase::where('status', 'open')->count(),
+        ];
+
+        $billingSummary = [
+            'total_revenue'    => Billing::sum('paid_amount'),
+            'pending_payments' => Billing::where('status', '!=', 'paid')->sum('remaining_amount'),
+            'monthly_revenue'  => Payment::whereMonth('payment_date', now()->month)
+                                    ->whereYear('payment_date', now()->year)
+                                    ->sum('amount'),
+        ];
+
+        $transferChart       = $this->getTransferChartData();
+        $permitStatus        = $this->getPermitStatusData();
+        $workTypeDistribution = $this->getWorkTypeDistribution();
+        $monthlyRevenue      = $this->getMonthlyRevenue();
+        $recentTransfers     = $this->getRecentTransfers();
+
+        return view('dashboard.dashboard-stats', compact(
+            'summaryStats',
+            'billingSummary',
+            'transferChart',
+            'permitStatus',
+            'workTypeDistribution',
+            'monthlyRevenue',
+            'recentTransfers'
+        ));
     }
 
     /**
@@ -216,9 +249,9 @@ class HomeController extends Controller
                     'active_vehicles' => VehicleCase::where('status', 'open')->count(),
                     'total_revenue' => Billing::sum('paid_amount'),
                     'pending_payments' => Billing::where('status', '!=', 'paid')->sum('remaining_amount'),
-                    'monthly_revenue' => Billing::whereMonth('billing_date', now()->month)
-                        ->whereYear('billing_date', now()->year)
-                        ->sum('paid_amount'),
+                    'monthly_revenue' => Payment::whereMonth('payment_date', now()->month)
+                        ->whereYear('payment_date', now()->year)
+                        ->sum('amount'),
                 ];
             case 'transfers':
                 return $this->getTransferChartData();
@@ -312,9 +345,9 @@ class HomeController extends Controller
             $date = now()->subMonths($i);
             $labels[] = $date->format('M Y');
 
-            $revenue = Billing::whereYear('billing_date', $date->year)
-                ->whereMonth('billing_date', $date->month)
-                ->sum('paid_amount');
+            $revenue = Payment::whereYear('payment_date', $date->year)
+                ->whereMonth('payment_date', $date->month)
+                ->sum('amount');
 
             $data[] = $revenue;
         }

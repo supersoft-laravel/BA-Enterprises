@@ -409,11 +409,47 @@
     </div>
 </div>
 
+<!-- =================== ADD CUSTOMER MODAL =================== -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" id="addCustomerModalLabel">
+                    <i class="fas fa-user-plus me-2 text-primary"></i>Add New Customer
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size:0.85rem;">Customer Name <span class="text-danger">*</span></label>
+                    <input type="text" id="modalCustomerName" class="form-control" placeholder="Full name">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label fw-semibold" style="font-size:0.85rem;">Mobile No. <span class="text-danger">*</span></label>
+                    <input type="text" id="modalCustomerMobile" class="form-control" placeholder="03XX-XXXXXXX">
+                </div>
+                <div id="addCustomerModalError" class="alert alert-danger py-2 d-none mt-3 mb-0" style="font-size:0.82rem;"></div>
+            </div>
+            <div class="modal-footer border-top">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="saveNewCustomerBtn" class="btn btn-primary btn-sm px-3">
+                    <i class="fas fa-save me-1"></i>Save Customer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('script')
 <script src="{{ asset('assets/vendor/libs/flatpickr/flatpickr.js') }}"></script>
 <script>
+// Blade-rendered data — available to the IIFE below
+const CUSTOMERS_DATA = @json($customers);
+const CAN_CREATE_CUSTOMER = @json(auth()->user()->can('create customer'));
+const AJAX_STORE_CUSTOMER_URL = "{{ route('dashboard.customers.store-ajax') }}";
+
 (function () {
     'use strict';
 
@@ -468,6 +504,7 @@
 
     // Persisted vehicle fields — never wiped on re-render
     const vehicleState = {
+        customerId: '',
         vehicleNo:'', newVehicleNo:'', vehicleMake:'', vehicleModel:'',
         engineNo:'', chassisNo:'', partyName:'', partyMobile:'',
         vendorName:'', vendorMobile:'', date:'', comment:'', alterationType:''
@@ -949,6 +986,28 @@
     }
 
     // =========================================================
+    // BUILD CUSTOMER SELECT HTML
+    // =========================================================
+    function buildCustomerSelectHTML(selectedId) {
+        let opts = '<option value="">— Select Customer —</option>';
+        CUSTOMERS_DATA.forEach(function(c) {
+            const label = esc(c.customer_code) + ' — ' + esc(c.name) + ' — ' + (c.mobile || '—');
+            const sel = String(c.id) === String(selectedId) ? ' selected' : '';
+            opts += '<option value="' + c.id + '"' + sel + '>' + label + '</option>';
+        });
+        const addBtn = CAN_CREATE_CUSTOMER
+            ? '<button type="button" class="open-add-customer-modal-btn btn btn-sm btn-outline-primary text-nowrap" style="flex-shrink:0;border-radius:var(--radius-pill);padding:0.25rem 0.75rem;">'
+              + '<i class="fas fa-user-plus me-1"></i>+ Add</button>'
+            : '';
+        return '<div class="col-12">'
+             + '<label class="form-label-sm fw-semibold">Customer <span style="color:var(--danger);">*</span></label>'
+             + '<div class="d-flex gap-2 align-items-center">'
+             + '<select id="comm_customerId" class="form-select">' + opts + '</select>'
+             + addBtn
+             + '</div></div>';
+    }
+
+    // =========================================================
     // COMMON FIELDS (Vehicle & Party) — show/hide based on service type
     // =========================================================
     function updateCommonFields() {
@@ -980,8 +1039,7 @@
                 <div class="col-md-6"><label class="form-label-sm">Vehicle Model</label><input id="comm_vehicleModel" class="form-control"></div>
                 <div class="col-md-6"><label class="form-label-sm">Engine No</label><input id="comm_engineNo" class="form-control"></div>
                 <div class="col-md-6"><label class="form-label-sm">Chassis No</label><input id="comm_chassisNo" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label-sm">Customer Name</label><input id="comm_partyName" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label-sm">Customer Mobile</label><input id="comm_partyMobile" class="form-control"></div>
+                ${buildCustomerSelectHTML(vehicleState.customerId)}
                 <div class="col-md-6"><label class="form-label-sm">Vendor Name</label><input id="comm_vendorName" class="form-control"></div>
                 <div class="col-md-6"><label class="form-label-sm">Vendor Mobile</label><input id="comm_vendorMobile" class="form-control"></div>
                 ${alterationTypeField}
@@ -990,8 +1048,7 @@
         } else {
             container.innerHTML = `
                 <div class="col-md-6"><label class="form-label-sm">Vehicle No</label><input id="comm_vehicleNo" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label-sm">Customer Name</label><input id="comm_partyName" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label-sm">Customer Mobile</label><input id="comm_partyMobile" class="form-control"></div>
+                ${buildCustomerSelectHTML(vehicleState.customerId)}
                 <div class="col-md-6"><label class="form-label-sm">Vendor Name</label><input id="comm_vendorName" class="form-control"></div>
                 <div class="col-md-6"><label class="form-label-sm">Vendor Mobile</label><input id="comm_vendorMobile" class="form-control"></div>
                 <div class="col-md-6"><label class="form-label-sm">Date</label><input type="text" id="comm_date" class="form-control" placeholder="DD/MM/YYYY"></div>
@@ -1002,9 +1059,21 @@
         writeVehicleFields();
         initDatePicker();
 
+        // Customer dropdown: sync partyName/partyMobile when selection changes
+        const custSel = $('comm_customerId');
+        if (custSel) {
+            custSel.addEventListener('change', function() {
+                const selVal = this.value;
+                vehicleState.customerId = selVal;
+                const cust = CUSTOMERS_DATA.find(c => String(c.id) === String(selVal));
+                vehicleState.partyName   = cust ? cust.name          : '';
+                vehicleState.partyMobile = cust ? (cust.mobile || '') : '';
+            });
+        }
+
         // Add event listeners to save values on input
         Object.keys(vehicleState).forEach(k => {
-            if (k === 'date') return; // Flatpickr onChange handles date
+            if (k === 'date' || k === 'customerId') return; // handled separately
             const el = $('comm_' + k);
             if (el) {
                 el.addEventListener('input', () => readVehicleFields());
@@ -1052,6 +1121,7 @@
         readVehicleFields();
         const common = {
             city:           currentCity,
+            customerId:     vehicleState.customerId,
             vehicleNo:      vehicleState.vehicleNo,
             newVehicleNo:   vehicleState.newVehicleNo,
             vehicleMake:    vehicleState.vehicleMake,
@@ -1257,6 +1327,105 @@
         if ($('finalTotalAmount')) $('finalTotalAmount').value = '';
         if ($('finalReceivedAmount')) $('finalReceivedAmount').value = '0';
         if ($('finalRemainingAmount')) $('finalRemainingAmount').value = '';
+    }
+
+    // =========================================================
+    // ADD CUSTOMER MODAL
+    // =========================================================
+    // Event delegation — works for both Screen 2 and Screen 3 buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.open-add-customer-modal-btn')) {
+            const modalEl = document.getElementById('addCustomerModal');
+            if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        }
+    });
+
+    const saveNewCustomerBtn = $('saveNewCustomerBtn');
+    if (saveNewCustomerBtn) {
+        saveNewCustomerBtn.addEventListener('click', async function() {
+            const nameInput   = $('modalCustomerName');
+            const mobileInput = $('modalCustomerMobile');
+            const errDiv      = $('addCustomerModalError');
+            const name   = nameInput.value.trim();
+            const mobile = mobileInput.value.trim();
+
+            errDiv.classList.add('d-none');
+            errDiv.textContent = '';
+
+            if (!name || !mobile) {
+                errDiv.textContent = 'Customer Name and Mobile are required.';
+                errDiv.classList.remove('d-none');
+                return;
+            }
+
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Saving...';
+
+            try {
+                const res = await fetch(AJAX_STORE_CUSTOMER_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: JSON.stringify({ name, mobile })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    // Add new customer to live array
+                    CUSTOMERS_DATA.push({
+                        id:            data.customer.id,
+                        customer_code: data.customer.customer_code,
+                        name:          data.customer.name,
+                        mobile:        data.customer.mobile
+                    });
+
+                    // Pre-select in state
+                    vehicleState.customerId  = data.customer.id;
+                    vehicleState.partyName   = data.customer.name;
+                    vehicleState.partyMobile = data.customer.mobile || '';
+
+                    // Close modal and reset its fields
+                    bootstrap.Modal.getInstance($('addCustomerModal'))?.hide();
+                    nameInput.value   = '';
+                    mobileInput.value = '';
+
+                    // If the entry form is visible, rebuild the dropdown with the new customer pre-selected
+                    const container = $('dynamicCommonFieldsContainer');
+                    if (container && container.innerHTML !== '') {
+                        readVehicleFields();
+                        updateCommonFields();
+                        writeVehicleFields();
+                    }
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Customer Added!',
+                        text: data.customer.customer_code + ' — ' + data.customer.name,
+                        timer: 2500,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                } else {
+                    let msg = data.message || 'Failed to save customer.';
+                    if (data.errors) {
+                        msg = Object.values(data.errors).flat().join(' ');
+                    }
+                    errDiv.textContent = msg;
+                    errDiv.classList.remove('d-none');
+                }
+            } catch (err) {
+                errDiv.textContent = 'Network error. Please try again.';
+                errDiv.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save me-1"></i>Save Customer';
+            }
+        });
     }
 
     // =========================================================

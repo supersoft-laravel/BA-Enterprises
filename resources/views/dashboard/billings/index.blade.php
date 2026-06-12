@@ -3,6 +3,10 @@
 @section('title', __('Billings'))
 
 @section('css')
+<style>
+    .billings-table th,
+    .billings-table td { white-space: nowrap; }
+</style>
 @endsection
 
 
@@ -24,13 +28,14 @@
                 @endcan
             </div>
             <div class="card-datatable table-responsive">
-                <table class="datatables-users table border-top custom-datatables">
+                <table class="datatables-users table border-top custom-datatables billings-table">
                     <thead>
                         <tr>
                             <th>{{ __('Sr.') }}</th>
-                            <th>{{ __('Vehicle No') }}</th>
+                            <th>{{ __('Bill No') }}</th>
                             <th>{{ __('Customer Name') }}</th>
                             <th>{{ __('Total') }}</th>
+                            <th>{{ __('Paid') }}</th>
                             <th>{{ __('Remaining') }}</th>
                             <th>{{ __('Date') }}</th>
                             <th>{{ __('Status') }}</th>
@@ -41,11 +46,16 @@
                         @foreach ($billings as $index => $billing)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td>{{ $billing->vehicleCase->vehicle_no ?? 'N/A' }}</td>
-                                <td>{{ $billing->vehicleCase->party_name ?? 'N/A' }}</td>
-                                <td>{{ \App\Helpers\Helper::formatCurrency($billing->total_amount) }}</td>
-                                <td class="text-{{ $billing->remaining_amount > 0 ? 'danger' : 'success' }} fw-semibold">
-                                    {{ \App\Helpers\Helper::formatCurrency($billing->remaining_amount) }}
+                                <td>
+                                    <span class="fw-semibold" style="font-size:0.82rem;">{{ $billing->bill_no ?? 'N/A' }}</span>
+                                </td>
+                                <td>{{ $billing->customer->name ?? ($billing->vehicleCase->party_name ?? 'N/A') }}</td>
+                                <td class="fw-semibold">Rs. {{ number_format($billing->total_amount, 0) }}</td>
+                                <td class="fw-semibold" style="color:#059669;">
+                                    Rs. {{ number_format($billing->paid_amount, 0) }}
+                                </td>
+                                <td class="fw-semibold text-{{ $billing->remaining_amount > 0 ? 'danger' : 'success' }}">
+                                    Rs. {{ number_format($billing->remaining_amount, 0) }}
                                 </td>
                                 <td>{{ \Carbon\Carbon::parse($billing->billing_date)->format('d/m/Y') }}</td>
                                 @php
