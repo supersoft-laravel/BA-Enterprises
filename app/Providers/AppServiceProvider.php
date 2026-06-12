@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Rules\MaxUploadSize;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,6 +22,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Schema::defaultStringLength(191);
+
         Validator::extend('max_size', function ($attribute, $value, $parameters, $validator) {
             $rule = new MaxUploadSize();
             $fail = function ($message) use ($validator, $attribute) {
