@@ -357,8 +357,8 @@
     @endif
 
     {{-- BILLING SUMMARY --}}
-    @if($case->billing)
-    <div class="section-title">&#128179; Billing Summary</div>
+    @if($caseItems->count() > 0)
+    <div class="section-title">&#128179; Services &amp; Billing</div>
     <table>
         <thead>
             <tr>
@@ -369,7 +369,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($case->billing->items as $i => $item)
+            @foreach($caseItems as $i => $item)
             <tr>
                 <td>{{ $i + 1 }}</td>
                 <td>{{ $item->item_name }}</td>
@@ -378,44 +378,11 @@
             </tr>
             @endforeach
             <tr class="total-row">
-                <td colspan="3" class="text-right">Total Amount</td>
-                <td class="text-right">{{ \App\Helpers\Helper::formatCurrency($case->billing->total_amount) }}</td>
-            </tr>
-            <tr class="total-row">
-                <td colspan="3" class="text-right">Paid Amount</td>
-                <td class="text-right">{{ \App\Helpers\Helper::formatCurrency($case->billing->paid_amount) }}</td>
-            </tr>
-            <tr class="total-row">
-                <td colspan="3" class="text-right">Remaining Balance</td>
-                <td class="text-right">{{ \App\Helpers\Helper::formatCurrency($case->billing->remaining_amount) }}</td>
+                <td colspan="3" class="text-right">Case Total</td>
+                <td class="text-right">{{ \App\Helpers\Helper::formatCurrency($caseItems->sum('item_amount')) }}</td>
             </tr>
         </tbody>
     </table>
-
-    {{-- PAYMENT HISTORY --}}
-    @if($case->billing->payments && $case->billing->payments->count() > 0)
-    <div class="section-title" style="margin-top:14px;">&#128203; Payment History</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Method</th>
-                <th>Reference</th>
-                <th class="text-right">Amount (Rs.)</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($case->billing->payments as $payment)
-            <tr>
-                <td>{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d/m/Y') : 'N/A' }}</td>
-                <td>{{ ucfirst(str_replace('_', ' ', $payment->payment_method ?? 'N/A')) }}</td>
-                <td>{{ $payment->reference_no ?? ($payment->transaction_id ?? '—') }}</td>
-                <td class="text-right">{{ \App\Helpers\Helper::formatCurrency($payment->amount) }}</td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-    @endif
     @endif
 
     {{-- FOOTER --}}

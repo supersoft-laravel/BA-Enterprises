@@ -6,8 +6,7 @@
 @endsection
 
 @section('breadcrumb-items')
-    <li class="breadcrumb-item"><a href="{{ route('dashboard.cases.index') }}">Cases</a></li>
-    <li class="breadcrumb-item"><a href="{{ route('dashboard.cases.show', $case->id) }}">Case #{{ $case->id }}</a></li>
+    <li class="breadcrumb-item"><a href="javascript:history.back()">Cases</a></li>
     <li class="breadcrumb-item active">Edit</li>
 @endsection
 
@@ -24,8 +23,8 @@
                     {{ $case->vehicle_no ?? 'No Reg. No.' }} &bull; {{ $case->party_name ?? 'No Party' }}
                 </small>
             </div>
-            <a href="{{ route('dashboard.cases.show', $case->id) }}" class="btn btn-label-secondary btn-sm">
-                <i class="ti ti-arrow-left me-1"></i> Back to Case
+            <a href="javascript:history.back()" class="btn btn-label-secondary btn-sm">
+                <i class="ti ti-arrow-left me-1"></i> Back
             </a>
         </div>
 
@@ -164,7 +163,7 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="ti ti-device-floppy me-1"></i> Save Changes
                     </button>
-                    <a href="{{ route('dashboard.cases.show', $case->id) }}" class="btn btn-label-secondary">
+                    <a href="javascript:history.back()" class="btn btn-label-secondary">
                         <i class="ti ti-x me-1"></i> Cancel
                     </a>
                 </div>

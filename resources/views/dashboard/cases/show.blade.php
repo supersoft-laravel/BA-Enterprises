@@ -2,7 +2,7 @@
 @section('title', 'Case Details #' . $case->id)
 
 @section('breadcrumb-items')
-    <li class="breadcrumb-item"><a href="{{ route('dashboard.cases.index') }}">Cases</a></li>
+    <li class="breadcrumb-item"><a href="javascript:history.back()">Cases</a></li>
     <li class="breadcrumb-item active">Case #{{ $case->id }}</li>
 @endsection
 
@@ -67,11 +67,11 @@
                 <a href="{{ route('dashboard.cases.print', $case->id) }}" class="btn btn-secondary btn-sm" target="_blank">
                     <i class="ti ti-printer me-1"></i> Print Case
                 </a>
-                <a href="{{ route('dashboard.billings.show', $case->billing->id) }}" class="btn btn-info btn-sm" target="_blank">
-                    <i class="ti ti-receipt me-1"></i> View Billing Invoice
+                <a href="{{ route('dashboard.cases.invoice', $case->id) }}" class="btn btn-info btn-sm" target="_blank">
+                    <i class="ti ti-receipt me-1"></i> Case Invoice
                 </a>
-                <a href="{{ route('dashboard.cases.index') }}" class="btn btn-label-secondary btn-sm">
-                    <i class="ti ti-arrow-left me-1"></i> Back to List
+                <a href="javascript:history.back()" class="btn btn-label-secondary btn-sm">
+                    <i class="ti ti-arrow-left me-1"></i> Back
                 </a>
             </div>
         </div>
@@ -143,83 +143,25 @@
                 </div>
             </div>
 
-            {{-- Billing Information --}}
-            @if($case->billing)
+            {{-- Case Services & Amount --}}
             <div class="row mb-5">
                 <div class="col-12">
                     <h6 class="text-primary border-bottom pb-2 mb-3">
-                        <i class="ti ti-currency-dollar me-2"></i> Billing Information
+                        <i class="ti ti-shopping-cart me-2"></i> Services for This Case
                     </h6>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="fw-medium text-muted">Bill No.</label>
-                    <p class="mb-0 fw-semibold">
-                        <span class="badge bg-primary">{{ $case->billing->bill_no ?? 'N/A' }}</span>
-                    </p>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="fw-medium text-muted">Billing Type</label>
-                    <p class="mb-0 fw-semibold">{{ ucfirst($case->billing->billing_type ?? 'N/A') }}</p>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="fw-medium text-muted">Billing Date</label>
-                    <p class="mb-0 fw-semibold">{{ $case->billing->billing_date ? \Carbon\Carbon::parse($case->billing->billing_date)->format('d/m/Y') : 'N/A' }}</p>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="fw-medium text-muted">Status</label>
-                    <p class="mb-0">
-                        @php
-                            $statusClass = match($case->billing->status) {
-                                'paid' => 'success',
-                                'partial' => 'warning',
-                                default => 'danger'
-                            };
-                        @endphp
-                        <span class="badge bg-label-{{ $statusClass }} fs-6">
-                            {{ ucfirst($case->billing->status) }}
-                        </span>
-                    </p>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="fw-medium text-muted">Total Amount</label>
-                    <p class="mb-0 fw-semibold text-primary fs-5">Rs. {{ number_format($case->billing->total_amount, 2) }}</p>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="fw-medium text-muted">Paid Amount</label>
-                    <p class="mb-0 fw-semibold text-success">Rs. {{ number_format($case->billing->paid_amount, 2) }}</p>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="fw-medium text-muted">Remaining Amount</label>
-                    <p class="mb-0 fw-semibold text-danger">Rs. {{ number_format($case->billing->remaining_amount, 2) }}</p>
-                </div>
-                @if($case->billing->description)
-                <div class="col-12 mb-3">
-                    <label class="fw-medium text-muted">Description</label>
-                    <p class="mb-0">{{ $case->billing->description }}</p>
-                </div>
-                @endif
-            </div>
-            @endif
-
-            {{-- Services / Billing Items --}}
-            @if($case->billing && $case->billing->items && $case->billing->items->count() > 0)
-            <div class="row mb-5">
-                <div class="col-12">
-                    <h6 class="text-primary border-bottom pb-2 mb-3">
-                        <i class="ti ti-shopping-cart me-2"></i> Services Rendered
-                    </h6>
+                    @if($caseItems->count() > 0)
                     <div class="table-responsive">
                         <table class="table table-bordered">
                             <thead class="table-light">
                                 <tr>
                                     <th>#</th>
-                                    <th>Service Name</th>
-                                    <th>Service Date</th>
+                                    <th>Service</th>
+                                    <th>Date</th>
                                     <th class="text-end">Amount (Rs.)</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($case->billing->items as $index => $item)
+                                @foreach($caseItems as $index => $item)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $item->item_name }}</td>
@@ -227,16 +169,20 @@
                                     <td class="text-end">{{ number_format($item->item_amount, 2) }}</td>
                                 </tr>
                                 @endforeach
-                                <tr class="table-active">
-                                    <td colspan="3" class="text-end fw-bold">Total:</td>
-                                    <td class="text-end fw-bold">Rs. {{ number_format($case->billing->total_amount, 2) }}</td>
+                                <tr class="table-active fw-bold">
+                                    <td colspan="3" class="text-end">Case Total:</td>
+                                    <td class="text-end">Rs. {{ number_format($caseItems->sum('item_amount'), 2) }}</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
+                    @else
+                    <p class="text-secondary mb-0">
+                        <i class="ti ti-info-circle me-1"></i> No billing items recorded for this case.
+                    </p>
+                    @endif
                 </div>
             </div>
-            @endif
 
             {{-- Work Details Section --}}
             @php
@@ -257,7 +203,7 @@
                     <i class="ti ti-list-details me-2"></i> Work Details
                 </h6>
                 @can('update case')
-                    @if($case->billing && count($availableServices) > 0)
+                    @if($customerBilling && count($availableServices) > 0)
                         <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addServiceModal">
                             <i class="ti ti-plus me-1"></i> Add More Service
                         </button>
@@ -442,41 +388,6 @@
                 </div>
                 @endif
 
-                {{-- Payment History --}}
-                @if($case->billing && $case->billing->payments && $case->billing->payments->count() > 0)
-                <div class="col-12 mt-3">
-                    <div class="card border-info shadow-sm">
-                        <div class="card-header bg-label-info">
-                            <strong><i class="ti ti-credit-card me-2"></i> Payment History</strong>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Transaction ID</th>
-                                            <th>Amount</th>
-                                            <th>Payment Date</th>
-                                            <th>Method</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($case->billing->payments as $payment)
-                                        <tr>
-                                            <td>{{ $payment->transaction_id }}</td>
-                                            <td class="text-success">Rs. {{ number_format($payment->amount, 2) }}</td>
-                                            <td>{{ \Carbon\Carbon::parse($payment->payment_date)->format('d/m/Y') }}</td>
-                                            <td>{{ ucfirst($payment->payment_method) }}</td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                @endif
-
                 {{-- If no work details added yet --}}
                 @if(!$case->transfer && !$case->fileReturn && !$case->permit && !$case->fitness && !$case->tax && !$case->insurance && !$case->other)
                     <div class="col-12">
@@ -587,7 +498,7 @@
 
         {{-- Add More Service Modal --}}
         @can('update case')
-            @if(isset($availableServices) && $case->billing && count($availableServices) > 0)
+            @if(isset($availableServices) && $customerBilling && count($availableServices) > 0)
             <div class="modal fade" id="addServiceModal" tabindex="-1" aria-labelledby="addServiceModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
                     <div class="modal-content">
@@ -793,8 +704,8 @@
                                 <div class="alert alert-info py-2 mt-3 mb-0">
                                     <small>
                                         <i class="ti ti-info-circle me-1"></i>
-                                        Current bill total: <strong>Rs. {{ number_format($case->billing->total_amount, 2) }}</strong>.
-                                        The new amount will be added on top. Existing payments are untouched.
+                                        Customer bill total: <strong>Rs. {{ number_format($customerBilling->total_amount, 2) }}</strong>.
+                                        The new service amount will be added to the customer's bill. Existing payments are untouched.
                                     </small>
                                 </div>
 

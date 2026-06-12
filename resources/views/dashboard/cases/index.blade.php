@@ -3,144 +3,107 @@
 @section('title', __('Cases'))
 
 @section('css')
+<style>
+    .customer-row { cursor: pointer; transition: background 0.12s; }
+    .customer-row:hover td { background: rgba(29,78,216,0.04); }
+    .bill-badge {
+        display: inline-flex; align-items: center; gap: 0.3rem;
+        padding: 0.2rem 0.65rem; border-radius: 9999px;
+        font-size: 0.74rem; font-weight: 600;
+    }
+</style>
 @endsection
-
 
 @section('breadcrumb-items')
     <li class="breadcrumb-item active">{{ __('Cases') }}</li>
 @endsection
+
 @section('content')
-    <div class="container-xxl flex-grow-1 container-p-y">
-        <!-- Cases List Table -->
-        <div class="card">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                {{-- @canany(['create case'])
-                    <a href="{{route('dashboard.cases.create')}}" class="add-new btn btn-primary waves-effect waves-light">
-                        <i class="ti ti-plus me-0 me-sm-1 ti-xs"></i><span
-                            class="d-none d-sm-inline-block">{{ __('Add New Case') }}</span>
-                    </a>
-                @endcan --}}
-                <form method="GET" action="{{ route('dashboard.cases.index') }}">
-                    <div class="d-flex gap-2 align-items-center mt-3">
-                        <select name="refer_to" class="form-select" onchange="this.form.submit()">
-                            <option value="">{{ __('All Cities') }}</option>
-                            <option value="Karachi" {{ request('refer_to') == 'Karachi' ? 'selected' : '' }}>Karachi</option>
-                            <option value="Lasbella" {{ request('refer_to') == 'Lasbella' ? 'selected' : '' }}>Lasbella</option>
-                            <option value="Quetta" {{ request('refer_to') == 'Quetta' ? 'selected' : '' }}>Quetta</option>
-                            <option value="Peshawar" {{ request('refer_to') == 'Peshawar' ? 'selected' : '' }}>Peshawar</option>
-                            <option value="Gilgit" {{ request('refer_to') == 'Gilgit' ? 'selected' : '' }}>Gilgit</option>
-                            <option value="Punjab" {{ request('refer_to') == 'Punjab' ? 'selected' : '' }}>Punjab</option>
-                            <option value="Other" {{ request('refer_to') == 'Other' ? 'selected' : '' }}>Other</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="card-datatable table-responsive">
-                <table class="datatables-users table border-top custom-datatables">
-                    <thead>
-                        <tr>
-                            <th>{{ __('Sr.') }}</th>
-                            <th>{{ __('Reg. No.') }}</th>
-                            <th>{{ __('Customer Name') }}</th>
-                            <th>{{ __('Vendor Name') }}</th>
-                            <th>{{ __('City') }}</th>
-                            <th>{{ __('Status') }}</th>
-                            @canany(['delete case', 'update case', 'view case'])<th>{{ __('Action') }}</th>@endcan
+<div class="container-xxl flex-grow-1 container-p-y">
+    <div class="card">
+        <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h5 class="mb-0 fw-bold">Customers &amp; Cases</h5>
+            <span class="badge bg-label-secondary">{{ $customerGroups->count() }} customers
+                @if($legacyCount > 0)
+                    <span class="ms-1 text-warning">+ {{ $legacyCount }} uncategorized</span>
+                @endif
+            </span>
+        </div>
+
+        <div class="card-datatable table-responsive">
+            <table class="table border-top">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>ID</th>
+                        <th>Customer Name</th>
+                        <th>Mobile</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-end">Paid</th>
+                        <th class="text-end">Remaining</th>
+                        <th class="text-center">Bill</th>
+                        <th class="text-center">Cases</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($customerGroups as $index => $customer)
+                        @php $bill = $customer->billing; @endphp
+                        <tr class="customer-row"
+                            onclick="window.location='{{ route('dashboard.cases.customer-cases', $customer->id) }}'">
+                            <td>{{ $index + 1 }}</td>
+                            <td>
+                                <span class="badge bg-label-primary" style="font-size:0.72rem;">{{ $customer->customer_code }}</span>
+                            </td>
+                            <td class="fw-semibold">{{ $customer->name }}</td>
+                            <td class="text-secondary">{{ $customer->mobile ?? '—' }}</td>
+                            <td class="text-end fw-semibold">
+                                {{ $bill ? '₨ ' . number_format($bill->total_amount, 0) : '—' }}
+                            </td>
+                            <td class="text-end fw-semibold" style="color:#059669;">
+                                {{ $bill ? '₨ ' . number_format($bill->paid_amount, 0) : '—' }}
+                            </td>
+                            <td class="text-end fw-semibold" style="color:#dc2626;">
+                                {{ $bill ? '₨ ' . number_format($bill->remaining_amount, 0) : '—' }}
+                            </td>
+                            <td class="text-center">
+                                @if($bill)
+                                    @php
+                                        $billColors = [
+                                            'paid'    => ['bg-label-success',  'Paid'],
+                                            'partial' => ['bg-label-warning',  'Partial'],
+                                            'unpaid'  => ['bg-label-danger',   'Unpaid'],
+                                        ];
+                                        [$cls, $lbl] = $billColors[$bill->status] ?? ['bg-label-secondary', ucfirst($bill->status)];
+                                    @endphp
+                                    <span class="bill-badge {{ $cls }}">{{ $lbl }}</span>
+                                @else
+                                    <span class="bill-badge bg-label-secondary">No Bill</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-label-info">{{ $customer->vehicle_cases_count }}</span>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($cases as $index => $case)
-                            <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <td>{{ $case->vehicle_no }}</td>
-                                <td>{{ $case->party_name }}</td>
-                                <td>{{ $case->vendor_name ?? '—' }}</td>
-                                <td>{{ ucfirst($case->city) }}</td>
-                                <td>
-                                    <span
-                                        class="badge me-4 bg-label-{{ $case->status === 'open' ? 'success' : 'danger' }}">{{ ucfirst($case->status) }}</span>
-                                </td>
-                                @canany(['delete case', 'update case', 'view case'])
-                                    <td class="d-flex">
-                                        @canany(['delete case'])
-                                            <form class="case-delete-form" action="{{ route('dashboard.cases.destroy', $case->id) }}" method="POST">
-                                                @method('DELETE')
-                                                @csrf
-                                                <a href="#"
-                                                    class="btn btn-icon btn-text-danger waves-effect waves-light rounded-pill case-delete-btn"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    title="{{ __('Delete Case') }}"
-                                                    data-vehicle="{{ $case->vehicle_no ?? 'this case' }}">
-                                                    <i class="ti ti-trash ti-md"></i>
-                                                </a>
-                                            </form>
-                                        @endcan
-                                        @canany(['update case'])
-                                            <span class="text-nowrap">
-                                                <a href="{{ route('dashboard.cases.edit', $case->id) }}"
-                                                    class="btn btn-icon btn-text-primary waves-effect waves-light rounded-pill me-1"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    title="{{ __('Edit Case') }}">
-                                                    <i class="ti ti-edit ti-md"></i>
-                                                </a>
-                                            </span>
-                                        @endcan
-                                        @canany(['view case'])
-                                            <span class="text-nowrap">
-                                                <a href="{{ route('dashboard.cases.show', $case->id) }}"
-                                                    class="btn btn-icon btn-text-info waves-effect waves-light rounded-pill me-1"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    title="{{ __('View Case') }}">
-                                                    <i class="ti ti-eye ti-md"></i>
-                                                </a>
-                                            </span>
-                                        @endcan
-                                    </td>
-                                @endcan
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+                    @empty
+                        <tr>
+                            <td colspan="9" class="text-center text-secondary py-4">
+                                <i class="ti ti-folder-off ti-lg me-2"></i>No cases found. Create the first case from the Dashboard.
+                            </td>
+                        </tr>
+                    @endforelse
+
+                    @if($legacyCount > 0)
+                        <tr>
+                            <td>—</td>
+                            <td colspan="8" class="text-warning fw-semibold">
+                                <i class="ti ti-alert-triangle me-1"></i>
+                                {{ $legacyCount }} uncategorized case(s) with no customer linked (legacy data)
+                            </td>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
         </div>
     </div>
-@endsection
-
-@section('script')
-    <script>
-        $(document).ready(function() {
-            $(document).on('click', '.case-delete-btn', function(e) {
-                e.preventDefault();
-                const form   = $(this).closest('.case-delete-form');
-                const vehicle = $(this).data('vehicle');
-                Swal.fire({
-                    title: 'Delete Case?',
-                    html: `<p>You are about to delete <strong>${vehicle}</strong>.</p>
-                           <div class="alert alert-danger text-start mt-2 mb-0 py-2" style="font-size:0.85rem;">
-                               <i class="ti ti-alert-triangle me-1"></i>
-                               <strong>This will permanently delete:</strong>
-                               <ul class="mb-0 mt-1">
-                                   <li>The case and all service details</li>
-                                   <li>The linked bill and all billing items</li>
-                                   <li>All payments recorded against this bill</li>
-                               </ul>
-                           </div>
-                           <p class="mt-2 mb-0 text-danger fw-bold">This cannot be undone.</p>`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, delete everything',
-                    cancelButtonText: 'Cancel',
-                    customClass: {
-                        confirmButton: 'btn btn-danger me-3 waves-effect waves-light',
-                        cancelButton:  'btn btn-label-secondary waves-effect waves-light'
-                    },
-                    buttonsStyling: false
-                }).then(function(result) {
-                    if (result.isConfirmed) {
-                        form.submit();
-                    }
-                });
-            });
-        });
-    </script>
+</div>
 @endsection
