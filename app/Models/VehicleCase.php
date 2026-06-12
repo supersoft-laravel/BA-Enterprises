@@ -12,6 +12,8 @@ class VehicleCase extends Model
     protected $table = 'vehicle_cases';
 
     protected $fillable = [
+        'customer_id',
+
         // Common Info
         'city',
         'vehicle_no',
@@ -39,6 +41,11 @@ class VehicleCase extends Model
         // Status
         'status',
     ];
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
+    }
 
     public function transfer()
     {

@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Dashboard\AlterationController;
 use App\Http\Controllers\Dashboard\BillingController;
 use App\Http\Controllers\Dashboard\CaseController;
+use App\Http\Controllers\Dashboard\CustomerController;
 use App\Http\Controllers\Dashboard\FitnessController;
 use App\Http\Controllers\Dashboard\HomeController;
 use App\Http\Controllers\Dashboard\InsuranceController;
@@ -159,6 +160,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('other-users/status/{id}', [OtherUserController::class, 'updateStatus'])->name('other-users.status.update');
 
 
+            Route::resource('customers', CustomerController::class);
+            Route::post('customers/ajax/store', [CustomerController::class, 'storeAjax'])
+                ->name('customers.store-ajax');
+
+            Route::get('cases/customer/{customer}', [CaseController::class, 'customerCases'])
+                ->name('cases.customer-cases');
+
             Route::resource('cases', CaseController::class);
 
             Route::post('cases/activities/store', [CaseController::class, 'storeActivity'])
@@ -191,6 +199,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::get('cases/{case}/print', [CaseController::class, 'printCase'])
                 ->name('cases.print');
+
+            Route::get('cases/{case}/invoice', [CaseController::class, 'caseInvoice'])
+                ->name('cases.invoice');
 
             Route::resource('transfers', TransferController::class);
 

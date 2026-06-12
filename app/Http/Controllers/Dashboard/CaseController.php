@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\Billing;
 use App\Models\BillingItem;
+use App\Models\Customer;
 use App\Models\VehicleCase;
 use App\Models\CaseTransfer;
 use App\Models\CaseAlteration;
@@ -33,17 +34,43 @@ class CaseController extends Controller
         $this->authorize('view case');
 
         try {
-            $query = VehicleCase::query();
+            // Customer-grouped view: each customer row shows their billing summary + case count
+            $customerGroups = Customer::withCount('vehicleCases')
+                ->with('billing')
+                ->whereHas('vehicleCases')
+                ->orderBy('customer_code')
+                ->get();
 
-            if ($request->filled('refer_to')) {
-                $query->where('city', $request->refer_to);
-            }
+            // Legacy/uncategorized cases (no customer linked)
+            $legacyCount = VehicleCase::whereNull('customer_id')->count();
 
-            $cases = $query->latest()->get();
-
-            return view('dashboard.cases.index', compact('cases'));
+            return view('dashboard.cases.index', compact('customerGroups', 'legacyCount'));
         } catch (\Throwable $th) {
             Log::error("Case Index Failed:" . $th->getMessage());
+            return redirect()->back()->with('error', "Something went wrong! Please try again later");
+        }
+    }
+
+    /**
+     * Show all cases belonging to a single customer (drill-down from grouped index).
+     */
+    public function customerCases(Customer $customer)
+    {
+        $this->authorize('view case');
+
+        try {
+            $cases   = $customer->vehicleCases()->latest()->get();
+            $billing = $customer->billing;
+
+            // Per-case totals from billing items — keyed by case ID, no schema change needed
+            $caseAmounts = BillingItem::whereIn('vehicle_case_id', $cases->pluck('id'))
+                ->groupBy('vehicle_case_id')
+                ->selectRaw('vehicle_case_id, SUM(item_amount) as total')
+                ->pluck('total', 'vehicle_case_id');
+
+            return view('dashboard.cases.customer-cases', compact('customer', 'cases', 'billing', 'caseAmounts'));
+        } catch (\Throwable $th) {
+            Log::error("Customer Cases Failed:" . $th->getMessage());
             return redirect()->back()->with('error', "Something went wrong! Please try again later");
         }
     }
@@ -348,11 +375,24 @@ class CaseController extends Controller
     {
         $this->authorize('view case');
         try {
-            $case = VehicleCase::with('transfer', 'alteration', 'tax', 'insurance', 'permit', 'fitness', 'fileReturn', 'other')->findOrFail($id);
-            $caseActivities = $case->activities()->latest()->get();
-            return view('dashboard.cases.show', compact('case', 'caseActivities'));
+            $case = VehicleCase::with(
+                'transfer', 'alteration', 'tax', 'insurance',
+                'permit', 'fitness', 'fileReturn', 'other', 'customer'
+            )->findOrFail($id);
+
+            $caseActivities  = $case->activities()->latest()->get();
+            $caseItems       = BillingItem::where('vehicle_case_id', $id)->get();
+            $customerBilling = optional($case->customer)->billing;
+
+            // Fallback: if items have no vehicle_case_id (legacy data), load via billing FK
+            if ($caseItems->isEmpty() && $case->billing) {
+                $caseItems = $case->billing->items;
+            }
+
+            return view('dashboard.cases.show', compact(
+                'case', 'caseActivities', 'caseItems', 'customerBilling'
+            ));
         } catch (\Throwable $th) {
-            // throw $th;
             Log::error("Case Show Failed:" . $th->getMessage());
             return redirect()->back()->with('error', "Something went wrong! Please try again later");
         }
@@ -426,8 +466,14 @@ class CaseController extends Controller
 
             DB::commit();
 
+            if ($case->customer_id) {
+                return redirect()
+                    ->route('dashboard.cases.customer-cases', $case->customer_id)
+                    ->with('success', 'Case updated successfully!');
+            }
+
             return redirect()
-                ->route('dashboard.cases.show', $case->id)
+                ->route('dashboard.cases.index')
                 ->with('success', 'Case updated successfully!');
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -443,11 +489,55 @@ class CaseController extends Controller
     {
         $this->authorize('delete case');
         try {
-            $case = VehicleCase::findOrFail($id);
+            DB::beginTransaction();
+
+            $case       = VehicleCase::with('customer')->findOrFail($id);
+            $customerId = $case->customer_id;
+
+            // Find the customer's billing via customer_id (not vehicle_case_id FK which would be stale)
+            $billing = $customerId ? Billing::where('customer_id', $customerId)->first() : null;
+
+            if ($billing) {
+                // Sum what this case contributed
+                $caseItemsTotal = BillingItem::where('vehicle_case_id', $case->id)->sum('item_amount');
+
+                // Remove only this case's billing items
+                BillingItem::where('vehicle_case_id', $case->id)->delete();
+
+                $remainingItemsTotal = BillingItem::where('billing_id', $billing->id)->sum('item_amount');
+
+                if ($remainingItemsTotal > 0) {
+                    // Other cases still have items — recalculate totals
+                    $newPaid      = min($billing->paid_amount, $remainingItemsTotal);
+                    $newRemaining = $remainingItemsTotal - $newPaid;
+                    $billing->update([
+                        'total_amount'     => $remainingItemsTotal,
+                        'paid_amount'      => $newPaid,
+                        'remaining_amount' => $newRemaining,
+                        'status'           => $this->determinePaymentStatus($newPaid, $remainingItemsTotal),
+                    ]);
+                } else {
+                    // No items left at all — remove the billing and its payments
+                    $billing->payments()->delete();
+                    $billing->delete();
+                }
+            }
+
             $case->delete();
-            return redirect()->route('dashboard.cases.index')->with('success', 'Case Deleted Successfully');
+
+            DB::commit();
+
+            // Return to customer-cases if customer exists, otherwise cases index
+            if ($customerId) {
+                return redirect()
+                    ->route('dashboard.cases.customer-cases', $customerId)
+                    ->with('success', 'Case deleted and bill recalculated.');
+            }
+
+            return redirect()->route('dashboard.cases.index')->with('success', 'Case deleted successfully.');
+
         } catch (\Throwable $th) {
-            // throw $th;
+            DB::rollBack();
             Log::error("Case Delete Failed:" . $th->getMessage());
             return redirect()->back()->with('error', "Something went wrong! Please try again later");
         }
@@ -491,6 +581,7 @@ class CaseController extends Controller
             'common.city'        => 'required|string|max:255',
             'common.vehicleNo'      => 'nullable|string|max:255',
             'common.newVehicleNo'   => 'nullable|string|max:255',
+            'common.customerId'     => 'nullable|exists:customers,id',
             'common.partyName'      => 'nullable|string|max:255',
             'common.partyMobile'    => 'nullable|string|max:255',
             'common.vendorName'     => 'nullable|string|max:255',
@@ -528,52 +619,76 @@ class CaseController extends Controller
                 }
             }
 
+            // Resolve customer — prefer linked record, fall back to raw input
+            $customerId = $request->input('common.customerId');
+            $customer   = $customerId ? Customer::find($customerId) : null;
+            $partyName   = $customer ? $customer->name          : ($request->input('common.partyName')   ?? '');
+            $partyMobile = $customer ? ($customer->mobile ?? '') : ($request->input('common.partyMobile') ?? '');
+
             // 1. Create the vehicle case
             $vehicleCase = VehicleCase::create([
-                'city' => $request->input('common.city'),
-                'vehicle_no' => $request->input('common.vehicleNo'),
+                'customer_id'   => $customer?->id,
+                'city'          => $request->input('common.city'),
+                'vehicle_no'    => $request->input('common.vehicleNo'),
                 'new_vehicle_no' => $request->input('common.newVehicleNo'),
-                'vehicle_make' => $request->input('common.vehicleMake'),
+                'vehicle_make'  => $request->input('common.vehicleMake'),
                 'vehicle_model' => $request->input('common.vehicleModel'),
-                'engine_no' => $request->input('common.engineNo'),
-                'chassis_no' => $request->input('common.chassisNo'),
-                'party_name'    => $request->input('common.partyName') ?? '',
-                'party_mobile'  => $request->input('common.partyMobile') ?? '',
+                'engine_no'     => $request->input('common.engineNo'),
+                'chassis_no'    => $request->input('common.chassisNo'),
+                'party_name'    => $partyName,
+                'party_mobile'  => $partyMobile,
                 'vendor_name'   => $request->input('common.vendorName'),
                 'vendor_mobile' => $request->input('common.vendorMobile'),
-                'case_date' => $safeDate,
-                'comment' => $request->input('common.comment'),
-                'submitted_at' => $request->has('submittedAt')
+                'case_date'     => $safeDate,
+                'comment'       => $request->input('common.comment'),
+                'submitted_at'  => $request->has('submittedAt')
                     ? date('Y-m-d H:i:s', strtotime($request->input('submittedAt')))
                     : now(),
             ]);
 
-            // 2. Create billing record
-            $billing = Billing::create([
-                'vehicle_case_id' => $vehicleCase->id,
-                'billing_type' => 'local',
-                'bill_no' => $this->generateBillNumber(),
-                'total_amount' => $request->input('totals.totalAmount'),
-                'paid_amount' => $request->input('totals.receivedAmount'),
-                'remaining_amount' => $request->input('totals.remainingAmount'),
-                'billing_date' => now(),
-                'billing_name' => $request->input('common.partyName'),
-                'description' => $request->input('common.comment'),
-                'status' => $this->determinePaymentStatus(
-                    $request->input('totals.receivedAmount'),
-                    $request->input('totals.totalAmount')
-                ),
-            ]);
+            // 2. Find-or-create billing — 1 Customer = 1 Bill rule
+            $receivedAmount  = (float) $request->input('totals.receivedAmount', 0);
+            $newServiceTotal = (float) $request->input('totals.totalAmount', 0);
+
+            $existingBilling = $customer ? Billing::where('customer_id', $customer->id)->first() : null;
+
+            if ($existingBilling) {
+                // Append to the customer's existing bill
+                $existingBilling->total_amount    += $newServiceTotal;
+                $existingBilling->paid_amount     += $receivedAmount;
+                $existingBilling->remaining_amount = $existingBilling->total_amount - $existingBilling->paid_amount;
+                $existingBilling->status           = $this->determinePaymentStatus(
+                    $existingBilling->paid_amount, $existingBilling->total_amount
+                );
+                $existingBilling->save();
+                $billing = $existingBilling;
+            } else {
+                // First bill for this customer, or no-customer legacy path
+                $billing = Billing::create([
+                    'vehicle_case_id'  => $vehicleCase->id, // first case only; untouched on append
+                    'customer_id'      => $customer?->id,
+                    'billing_type'     => 'local',
+                    'bill_no'          => $this->generateBillNumber(),
+                    'total_amount'     => $newServiceTotal,
+                    'paid_amount'      => $receivedAmount,
+                    'remaining_amount' => $newServiceTotal - $receivedAmount,
+                    'billing_date'     => now(),
+                    'billing_name'     => $partyName,
+                    'description'      => $request->input('common.comment'),
+                    'status'           => $this->determinePaymentStatus($receivedAmount, $newServiceTotal),
+                ]);
+            }
 
             // 3. Process services and create billing items
             $services = $request->input('services', []);
             foreach ($services as $service) {
-                // Create billing item (service_date defaults to the case date)
+                // vehicle_case_id on each item traces the line back to its case
                 BillingItem::create([
-                    'billing_id'   => $billing->id,
-                    'item_name'    => $service['serviceType'],
-                    'item_amount'  => $service['amount'],
-                    'service_date' => $safeDate,
+                    'billing_id'      => $billing->id,
+                    'vehicle_case_id' => $vehicleCase->id,
+                    'item_name'       => $service['serviceType'],
+                    'item_amount'     => $service['amount'],
+                    'service_date'    => $safeDate,
                 ]);
 
                 // Create service-specific records
@@ -581,13 +696,13 @@ class CaseController extends Controller
             }
 
             // 4. Create payment record if received amount > 0
-            if ($request->input('totals.receivedAmount') > 0) {
+            if ($receivedAmount > 0) {
                 Payment::create([
-                    'transaction_id' => $this->generateTransactionId(), // Implement this helper method
-                    'billing_id' => $billing->id,
-                    'amount' => $request->input('totals.receivedAmount'),
-                    'payment_date' => now(),
-                    'payment_method' => 'cash', // You might want to get this from request
+                    'transaction_id' => $this->generateTransactionId(),
+                    'billing_id'     => $billing->id,
+                    'amount'         => $receivedAmount,
+                    'payment_date'   => now(),
+                    'payment_method' => 'cash',
                 ]);
             }
 
@@ -645,9 +760,11 @@ class CaseController extends Controller
             return redirect()->back()->with('error', $validator->errors()->first());
         }
 
-        $case->load(['transfer', 'alteration', 'tax', 'insurance', 'permit', 'fitness', 'fileReturn', 'other', 'billing']);
+        $case->load(['transfer', 'alteration', 'tax', 'insurance', 'permit', 'fitness', 'fileReturn', 'other', 'billing', 'customer']);
 
-        if (!$case->billing) {
+        // billing() uses vehicle_case_id — null for 2nd/3rd cases; fall back to the customer's bill
+        $billing = $case->billing ?? optional($case->customer)->billing;
+        if (!$billing) {
             return redirect()->back()->with('error', 'No billing record found for this case.');
         }
 
@@ -731,17 +848,18 @@ class CaseController extends Controller
                 'details'     => $details,
             ], $serviceType === 'Alteration' ? $request->input('alteration_type') : null);
 
-            // 2. Create billing item with service date
+            // 2. Create billing item — vehicle_case_id traces this line back to its specific case
             BillingItem::create([
-                'billing_id'   => $case->billing->id,
-                'item_name'    => $serviceType,
-                'item_amount'  => $amount,
-                'service_date' => $serviceDate,
+                'billing_id'      => $billing->id,
+                'vehicle_case_id' => $case->id,
+                'item_name'       => $serviceType,
+                'item_amount'     => $amount,
+                'service_date'    => $serviceDate,
             ]);
 
             // 3. Recalculate billing totals — paid_amount and payments never touched
-            $billing      = $case->billing()->lockForUpdate()->firstOrFail();
-            $newTotal     = $billing->total_amount + $amount;
+            $billing  = Billing::where('id', $billing->id)->lockForUpdate()->firstOrFail();
+            $newTotal = $billing->total_amount + $amount;
             $newRemaining = $newTotal - $billing->paid_amount;
 
             $newStatus = 'unpaid';
@@ -786,8 +904,24 @@ class CaseController extends Controller
     public function printCase(VehicleCase $case)
     {
         $this->authorize('view case');
-        $case->load('transfer', 'alteration', 'tax', 'insurance', 'permit', 'fitness', 'fileReturn', 'other', 'billing.items', 'billing.payments');
-        return view('dashboard.cases.print', compact('case'));
+        $case->load('transfer', 'alteration', 'tax', 'insurance', 'permit', 'fitness', 'fileReturn', 'other', 'customer', 'billing');
+        $caseItems = BillingItem::where('vehicle_case_id', $case->id)->get();
+        if ($caseItems->isEmpty() && $case->billing) {
+            $caseItems = $case->billing->items;
+        }
+        return view('dashboard.cases.print', compact('case', 'caseItems'));
+    }
+
+    public function caseInvoice(VehicleCase $case)
+    {
+        $this->authorize('view case');
+        $case->load('customer', 'billing');
+        $caseItems       = BillingItem::where('vehicle_case_id', $case->id)->get();
+        if ($caseItems->isEmpty() && $case->billing) {
+            $caseItems = $case->billing->items;
+        }
+        $customerBilling = optional($case->customer)->billing;
+        return view('dashboard.cases.invoice', compact('case', 'caseItems', 'customerBilling'));
     }
 
     public function updateService(Request $request, VehicleCase $case, string $type)

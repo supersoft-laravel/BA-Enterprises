@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('billings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('vehicle_case_id')->constrained('vehicle_cases')->cascadeOnDelete();
+            $table->unsignedBigInteger('vehicle_case_id')->nullable();
+            $table->foreign('vehicle_case_id')->references('id')->on('vehicle_cases')->nullOnDelete();
             $table->enum('billing_type', ['local', 'out_of_city'])->default('local');
             $table->string('bill_no')->nullable()->unique();
             $table->decimal('total_amount', 10, 2);

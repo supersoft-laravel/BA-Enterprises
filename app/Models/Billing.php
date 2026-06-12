@@ -13,6 +13,7 @@ class Billing extends Model
 
     protected $fillable = [
         'vehicle_case_id',
+        'customer_id',
         'billing_type',
         'bill_no',
         'total_amount',
@@ -37,5 +38,10 @@ class Billing extends Model
     public function vehicleCase()
     {
         return $this->belongsTo(VehicleCase::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 }

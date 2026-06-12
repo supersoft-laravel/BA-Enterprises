@@ -13,6 +13,7 @@ class BillingItem extends Model
 
     protected $fillable = [
         'billing_id',
+        'vehicle_case_id',
         'item_name',
         'item_amount',
         'service_date',
