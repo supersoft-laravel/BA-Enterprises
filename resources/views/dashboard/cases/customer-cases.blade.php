@@ -130,7 +130,8 @@
                                                class="btn btn-icon btn-text-danger waves-effect waves-light rounded-pill case-delete-btn"
                                                data-bs-toggle="tooltip" data-bs-placement="top"
                                                title="{{ __('Delete Case') }}"
-                                               data-vehicle="{{ $case->vehicle_no ?? 'this case' }}">
+                                               data-vehicle="{{ $case->vehicle_no ?? 'this case' }}"
+                                               data-is-last="{{ $cases->count() === 1 ? 'true' : 'false' }}">
                                                 <i class="ti ti-trash ti-md"></i>
                                             </a>
                                         </form>
@@ -185,16 +186,25 @@
         // Delete confirm
         $(document).on('click', '.case-delete-btn', function(e) {
             e.preventDefault();
-            const form    = $(this).closest('.case-delete-form');
+            const form   = $(this).closest('.case-delete-form');
             const vehicle = $(this).data('vehicle');
+            const isLast  = $(this).data('is-last') === 'true';
+
+            const noteHtml = isLast
+                ? `<div class="alert alert-danger text-start mt-2 mb-0 py-2" style="font-size:0.85rem;">
+                       <i class="ti ti-alert-triangle me-1"></i>
+                       <strong>Warning:</strong> This is the <strong>last case</strong> for this customer.
+                       Deleting it will also permanently delete the <strong>customer bill and all payments</strong>.
+                   </div>`
+                : `<div class="alert alert-warning text-start mt-2 mb-0 py-2" style="font-size:0.85rem;">
+                       <i class="ti ti-alert-triangle me-1"></i>
+                       <strong>Note:</strong> Deleting this case removes its service records and billing items.
+                       The customer bill totals will be recalculated automatically.
+                   </div>`;
+
             Swal.fire({
-                title: 'Delete Case?',
-                html: `<p>You are about to delete <strong>${vehicle}</strong>.</p>
-                       <div class="alert alert-danger text-start mt-2 mb-0 py-2" style="font-size:0.85rem;">
-                           <i class="ti ti-alert-triangle me-1"></i>
-                           <strong>Note:</strong> Deleting this case removes its service records and billing items.
-                           The customer bill totals will <strong>not</strong> be automatically recalculated.
-                       </div>`,
+                title: isLast ? 'Delete Last Case?' : 'Delete Case?',
+                html: `<p>You are about to delete <strong>${vehicle}</strong>.</p>${noteHtml}`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Yes, delete',
