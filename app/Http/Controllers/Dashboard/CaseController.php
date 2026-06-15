@@ -76,6 +76,52 @@ class CaseController extends Controller
     }
 
     /**
+     * Search cases by vehicle number (AJAX).
+     */
+    public function searchByVehicle(Request $request)
+    {
+        $this->authorize('view case');
+
+        $q = trim($request->get('q', ''));
+
+        if (strlen($q) < 1) {
+            return response()->json([]);
+        }
+
+        $cases = VehicleCase::with('customer')
+            ->where('vehicle_no', 'like', '%' . $q . '%')
+            ->latest()
+            ->limit(30)
+            ->get();
+
+        $caseAmounts = BillingItem::whereIn('vehicle_case_id', $cases->pluck('id'))
+            ->groupBy('vehicle_case_id')
+            ->selectRaw('vehicle_case_id, SUM(item_amount) as total')
+            ->pluck('total', 'vehicle_case_id');
+
+        $results = $cases->map(function ($case) use ($caseAmounts) {
+            return [
+                'id'          => $case->id,
+                'vehicle_no'  => $case->vehicle_no ?? '—',
+                'vendor_name' => $case->vendor_name ?? '—',
+                'city'        => ucfirst($case->city ?? ''),
+                'case_date'   => $case->case_date ? \Carbon\Carbon::parse($case->case_date)->format('d M Y') : '—',
+                'status'      => $case->status,
+                'amount'      => $caseAmounts[$case->id] ?? 0,
+                'customer_name' => $case->customer?->name ?? '—',
+                'customer_id'   => $case->customer_id,
+                'edit_url'    => route('dashboard.cases.edit', $case->id),
+                'show_url'    => route('dashboard.cases.show', $case->id),
+                'customer_url'=> $case->customer_id
+                    ? route('dashboard.cases.customer-cases', $case->customer_id)
+                    : null,
+            ];
+        });
+
+        return response()->json($results);
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()
@@ -494,32 +540,40 @@ class CaseController extends Controller
             $case       = VehicleCase::with('customer')->findOrFail($id);
             $customerId = $case->customer_id;
 
-            // Find the customer's billing via customer_id (not vehicle_case_id FK which would be stale)
+            // Count cases that will remain after this deletion
+            $remainingCasesCount = $customerId
+                ? VehicleCase::where('customer_id', $customerId)->where('id', '!=', $case->id)->count()
+                : 0;
+
             $billing = $customerId ? Billing::where('customer_id', $customerId)->first() : null;
 
             if ($billing) {
-                // Sum what this case contributed
-                $caseItemsTotal = BillingItem::where('vehicle_case_id', $case->id)->sum('item_amount');
-
-                // Remove only this case's billing items
-                BillingItem::where('vehicle_case_id', $case->id)->delete();
-
-                $remainingItemsTotal = BillingItem::where('billing_id', $billing->id)->sum('item_amount');
-
-                if ($remainingItemsTotal > 0) {
-                    // Other cases still have items — recalculate totals
-                    $newPaid      = min($billing->paid_amount, $remainingItemsTotal);
-                    $newRemaining = $remainingItemsTotal - $newPaid;
-                    $billing->update([
-                        'total_amount'     => $remainingItemsTotal,
-                        'paid_amount'      => $newPaid,
-                        'remaining_amount' => $newRemaining,
-                        'status'           => $this->determinePaymentStatus($newPaid, $remainingItemsTotal),
-                    ]);
-                } else {
-                    // No items left at all — remove the billing and its payments
+                if ($remainingCasesCount === 0) {
+                    // Last case — wipe the entire billing (handles NULL vehicle_case_id items too)
+                    BillingItem::where('billing_id', $billing->id)->delete();
                     $billing->payments()->delete();
                     $billing->delete();
+                } else {
+                    // Other cases remain — remove only this case's billing items and recalculate
+                    BillingItem::where('vehicle_case_id', $case->id)->delete();
+
+                    $remainingItemsTotal = BillingItem::where('billing_id', $billing->id)->sum('item_amount');
+
+                    if ($remainingItemsTotal > 0) {
+                        $newPaid      = min($billing->paid_amount, $remainingItemsTotal);
+                        $newRemaining = $remainingItemsTotal - $newPaid;
+                        $billing->update([
+                            'total_amount'     => $remainingItemsTotal,
+                            'paid_amount'      => $newPaid,
+                            'remaining_amount' => $newRemaining,
+                            'status'           => $this->determinePaymentStatus($newPaid, $remainingItemsTotal),
+                        ]);
+                    } else {
+                        // Edge case: no items left (e.g. all were NULL vehicle_case_id) — wipe billing
+                        BillingItem::where('billing_id', $billing->id)->delete();
+                        $billing->payments()->delete();
+                        $billing->delete();
+                    }
                 }
             }
 
@@ -527,7 +581,13 @@ class CaseController extends Controller
 
             DB::commit();
 
-            // Return to customer-cases if customer exists, otherwise cases index
+            // Last case deleted → go to index (customer still exists but has no cases/billing)
+            if ($remainingCasesCount === 0 && $customerId) {
+                return redirect()
+                    ->route('dashboard.cases.index')
+                    ->with('success', 'Last case deleted. Customer billing has been removed.');
+            }
+
             if ($customerId) {
                 return redirect()
                     ->route('dashboard.cases.customer-cases', $customerId)

@@ -167,6 +167,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('cases/customer/{customer}', [CaseController::class, 'customerCases'])
                 ->name('cases.customer-cases');
 
+            Route::get('cases/search/vehicle', [CaseController::class, 'searchByVehicle'])
+                ->name('cases.search-vehicle');
+
             Route::resource('cases', CaseController::class);
 
             Route::post('cases/activities/store', [CaseController::class, 'storeActivity'])
