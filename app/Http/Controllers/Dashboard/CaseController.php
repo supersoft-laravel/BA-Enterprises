@@ -1014,9 +1014,15 @@ class CaseController extends Controller
 
             DB::commit();
 
+            if ($case->customer_id) {
+                return redirect()
+                    ->route('dashboard.cases.customer-cases', $case->customer_id)
+                    ->with('success', ucfirst(str_replace('-', ' ', $type)) . ' updated successfully!');
+            }
+
             return redirect()
-                ->route('dashboard.cases.edit', $case->id)
-                ->with('success', ucfirst(str_replace('-', ' ', $type)) . ' details updated successfully!');
+                ->route('dashboard.cases.index')
+                ->with('success', ucfirst(str_replace('-', ' ', $type)) . ' updated successfully!');
 
         } catch (\Throwable $th) {
             DB::rollBack();
