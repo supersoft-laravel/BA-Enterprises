@@ -87,7 +87,7 @@
     {{-- Cases Table --}}
     <div class="card">
         <div class="card-datatable table-responsive">
-            <table class="datatables-users table border-top custom-datatables">
+            <table class="{{ $cases->isNotEmpty() ? 'datatables-users' : '' }} table border-top custom-datatables">
                 <thead>
                     <tr>
                         <th>{{ __('Sr.') }}</th>
