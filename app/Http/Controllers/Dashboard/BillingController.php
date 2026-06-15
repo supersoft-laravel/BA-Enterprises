@@ -215,10 +215,18 @@ class BillingController extends Controller
             $billing->description = $request->description;
             $billing->save();
 
+            // Preserve vehicle_case_id per item before deleting
+            $existingCaseIds = BillingItem::where('billing_id', $billing->id)
+                ->pluck('vehicle_case_id', 'id')
+                ->values()
+                ->toArray();
+
             BillingItem::where('billing_id', $billing->id)->delete();
-            foreach ($request->items as $item) {
+
+            foreach ($request->items as $index => $item) {
                 $billingItem = new BillingItem();
                 $billingItem->billing_id = $billing->id;
+                $billingItem->vehicle_case_id = $existingCaseIds[$index] ?? null;
                 $billingItem->item_name = $item['name'];
                 $billingItem->item_amount = $item['amount'];
                 $billingItem->save();
