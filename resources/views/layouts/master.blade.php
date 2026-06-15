@@ -30,10 +30,11 @@
                 <div class="content-wrapper">
                     <div class="container-xxl flex-grow-1 container-p-y">
                         <div class="mb-3" id="global-back-wrapper">
-                            <button id="global-back-btn"
+                            <a id="global-back-btn"
+                                href="@yield('back_url', 'javascript:history.back()')"
                                 class="btn btn-sm btn-label-secondary waves-effect waves-light">
                                 <i class="ti ti-arrow-left me-1"></i> Back
-                            </button>
+                            </a>
                         </div>
                         @yield('content')
                     </div>
@@ -250,18 +251,12 @@
     (function () {
         var path    = window.location.pathname.replace(/\/$/, '');
         var wrapper = document.getElementById('global-back-wrapper');
-        var btn     = document.getElementById('global-back-btn');
-        if (!wrapper || !btn) return;
+        if (!wrapper) return;
 
-        // Hide on root dashboard page
+        // Hide on root dashboard pages
         if (path === '/dashboard' || path === '/dashboard/stats' || path === '' || path === '/') {
             wrapper.style.display = 'none';
-            return;
         }
-
-        btn.addEventListener('click', function () {
-            history.back();
-        });
     })();
     </script>
 </body>
