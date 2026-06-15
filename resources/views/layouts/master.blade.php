@@ -253,8 +253,10 @@
         var wrapper = document.getElementById('global-back-wrapper');
         if (!wrapper) return;
 
-        // Hide on root dashboard pages
-        if (path === '/dashboard' || path === '/dashboard/stats' || path === '' || path === '/') {
+        // Hide on any top-level index page — /dashboard, /dashboard/cases, /dashboard/billings, etc.
+        // Only show on deeper pages: /dashboard/cases/1, /dashboard/cases/1/edit, etc.
+        var segments = path.replace(/^\//, '').split('/').filter(Boolean);
+        if (segments.length <= 2) {
             wrapper.style.display = 'none';
         }
     })();

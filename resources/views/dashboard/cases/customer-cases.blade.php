@@ -2,8 +2,6 @@
 
 @section('title', $customer->name . ' — Cases')
 
-@section('back_url', route('dashboard.cases.index'))
-
 @section('breadcrumb-items')
     <li class="breadcrumb-item">
         <a href="{{ route('dashboard.cases.index') }}">{{ __('Cases') }}</a>
