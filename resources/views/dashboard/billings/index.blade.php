@@ -21,7 +21,7 @@
                 @canany(['view billing'])
                     <a href="{{ route('dashboard.billings.custom-invoice') }}"
                        class="btn btn-primary waves-effect waves-light">
-                        <i class="ti ti-file-invoice me-1"></i>Customer Invoice
+                        <i class="ti ti-file-invoice me-1"></i>Custom Invoice
                     </a>
                 @endcan
             </div>
