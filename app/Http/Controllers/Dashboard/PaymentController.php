@@ -95,10 +95,9 @@ class PaymentController extends Controller
                 $payment->id
             );
 
-            $billing->paid_amount += $request->amount;
-            $billing->remaining_amount -= $request->amount;
-
-            $billing->remaining_amount = round($billing->remaining_amount, 2);
+            // Recalculate from actual payments table to avoid drift
+            $billing->paid_amount      = Payment::where('billing_id', $billing->id)->sum('amount');
+            $billing->remaining_amount = round($billing->total_amount - $billing->paid_amount, 2);
 
             if ($billing->remaining_amount <= 0) {
                 $billing->remaining_amount = 0;
@@ -173,18 +172,12 @@ class PaymentController extends Controller
             // 🔹 Get related billing
             $billing = Billing::lockForUpdate()->findOrFail($payment->billing_id);
 
-            // 🔹 Reverse payment effect
-            $billing->paid_amount -= $payment->amount;
-            $billing->remaining_amount += $payment->amount;
+            // 🔹 Delete first, then recalculate from actual payments table
+            $payment->delete();
 
-            // 🔹 Fix negative issues
-            if ($billing->paid_amount < 0) {
-                $billing->paid_amount = 0;
-            }
-
-            if ($billing->remaining_amount < 0) {
-                $billing->remaining_amount = 0;
-            }
+            // Recalculate from source of truth to avoid drift
+            $billing->paid_amount      = Payment::where('billing_id', $billing->id)->sum('amount');
+            $billing->remaining_amount = max(0, $billing->total_amount - $billing->paid_amount);
 
             // 🔹 Update status
             if ($billing->remaining_amount == 0 && $billing->paid_amount > 0) {
@@ -196,9 +189,6 @@ class PaymentController extends Controller
             }
 
             $billing->save();
-
-            // 🔹 Delete payment
-            $payment->delete();
 
             $adminUsers = User::whereHas('roles', function ($query) {
                 $query->whereIn('name', ['admin', 'super-admin']);

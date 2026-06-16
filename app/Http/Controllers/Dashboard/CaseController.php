@@ -563,7 +563,9 @@ class CaseController extends Controller
                     $remainingItemsTotal = BillingItem::where('billing_id', $billing->id)->sum('item_amount');
 
                     if ($remainingItemsTotal > 0) {
-                        $newPaid      = min($billing->paid_amount, $remainingItemsTotal);
+                        // Always recalculate from actual payments table to avoid drift
+                        $actualPaid   = Payment::where('billing_id', $billing->id)->sum('amount');
+                        $newPaid      = min($actualPaid, $remainingItemsTotal);
                         $newRemaining = $remainingItemsTotal - $newPaid;
                         $billing->update([
                             'total_amount'     => $remainingItemsTotal,
