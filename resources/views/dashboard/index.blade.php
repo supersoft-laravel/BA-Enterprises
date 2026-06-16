@@ -381,7 +381,7 @@
             </table>
         </div>
         <p class="small mb-0" style="color:var(--text-muted);">
-            <i class="fas fa-info-circle me-1"></i> Transfer, Alteration &amp; File Return share the same party details across all rows.
+            <i class="fas fa-info-circle me-1"></i> Transfer &amp; Alteration share the same party details across all rows.
         </p>
     </div>
 
@@ -457,7 +457,8 @@ const AJAX_STORE_CUSTOMER_URL = "{{ route('dashboard.customers.store-ajax') }}";
     // CONSTANTS & CONFIG
     // =========================================================
     const ALL_SERVICES = ['Transfer', 'Alteration', 'Route Permit', 'FC', 'Insurance', 'Tax', 'File Return', 'Others'];
-    const TRANSFER_LIKE = new Set(['Transfer', 'Alteration', 'File Return']);
+    const TRANSFER_LIKE = new Set(['Transfer', 'Alteration']);
+    const FULL_FORM_SERVICES = new Set(['Transfer', 'Alteration', 'File Return']);
     const SVC_ICONS = {
         Transfer: 'fa-exchange-alt', Alteration: 'fa-edit', 'Route Permit': 'fa-road',
         FC: 'fa-truck', Insurance: 'fa-shield-alt', Tax: 'fa-money-bill-wave',
@@ -578,7 +579,7 @@ const AJAX_STORE_CUSTOMER_URL = "{{ route('dashboard.customers.store-ajax') }}";
     // CHECK IF ANY TRANSFER-LIKE SERVICE EXISTS
     // =========================================================
     function hasTransferLikeService() {
-        return currentServicesRows.some(row => TRANSFER_LIKE.has(row.serviceType));
+        return currentServicesRows.some(row => FULL_FORM_SERVICES.has(row.serviceType));
     }
     const caseRoute = "{{ route('dashboard.cases.show', ':id') }}";
     const billingRoute = "{{ route('dashboard.payments.create') }}";
@@ -717,6 +718,8 @@ const AJAX_STORE_CUSTOMER_URL = "{{ route('dashboard.customers.store-ajax') }}";
         if (serviceType === 'Others') return `
             <div><label class="form-label-sm">Other Details</label><textarea class="form-control detail-otherDetails" rows="3" placeholder="Enter extra details">${t('otherDetails')}</textarea></div>`;
 
+        if (serviceType === 'File Return') return '';
+
         return '<p class="small text-secondary mb-0">No additional fields required.</p>';
     }
 
@@ -824,8 +827,9 @@ const AJAX_STORE_CUSTOMER_URL = "{{ route('dashboard.customers.store-ajax') }}";
         container.innerHTML = '';
 
         currentServicesRows.forEach(row => {
-            // Alteration has no detail block — its type is in the common fields
+            // Alteration and File Return have no detail block
             if (row.serviceType === 'Alteration') return;
+            if (row.serviceType === 'File Return') return;
 
             const div = document.createElement('div');
             div.className = 'service-detail-block';
