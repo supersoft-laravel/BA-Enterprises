@@ -18,4 +18,9 @@ class BillingItem extends Model
         'item_amount',
         'service_date',
     ];
+
+    public function vehicleCase()
+    {
+        return $this->belongsTo(VehicleCase::class, 'vehicle_case_id');
+    }
 }

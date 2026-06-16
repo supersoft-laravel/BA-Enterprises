@@ -132,10 +132,18 @@
 
         .item-name {
             flex: 1;
-            padding-right: 5px;
+        }
+
+        .item-vehicle {
+            flex: 1;
+            text-align: center;
+            font-size: 10px;
+            color: #555;
         }
 
         .item-amount {
+            flex: 1;
+            text-align: right;
             font-weight: bold;
         }
 
@@ -403,10 +411,6 @@
         <!-- ===== CUSTOMER / CASE INFO ===== -->
         <div class="info-block">
             <div class="info-row">
-                <span class="info-label">Vehicle:</span>
-                <span class="blade-placeholder">{{ $billing->vehicleCase->vehicle_no ?? 'ABC-1234' }}</span>
-            </div>
-            <div class="info-row">
                 <span class="info-label">Make/Year:</span>
                 <span class="blade-placeholder">{{ $billing->vehicleCase->make ?? 'Toyota' }}
                     {{ $billing->vehicleCase->model ?? '2020' }}</span>
@@ -427,18 +431,21 @@
         <!-- ===== ITEMS ===== -->
         <div class="items">
             <div class="items-header">
-                <span>DESCRIPTION</span>
-                <span>AMT (PKR)</span>
+                <span style="flex:1;">DESCRIPTION</span>
+                <span style="flex:1;text-align:center;">VEHICLE NO</span>
+                <span style="flex:1;text-align:right;">AMT (PKR)</span>
             </div>
 
             @forelse($billing->items ?? [] as $item)
                 <div class="item-row">
                     <span class="item-name blade-placeholder">{{ Str::limit($item->item_name, 22) }}</span>
+                    <span class="item-vehicle blade-placeholder">{{ $item->vehicleCase->vehicle_no ?? '—' }}</span>
                     <span class="item-amount blade-placeholder">{{ \App\Helpers\Helper::formatCurrency($item->item_amount) }}</span>
                 </div>
             @empty
                 <div class="item-row">
                     <span class="item-name">No items found</span>
+                    <span class="item-vehicle">—</span>
                     <span class="item-amount">0.00</span>
                 </div>
             @endforelse

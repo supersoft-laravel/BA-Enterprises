@@ -143,7 +143,7 @@ class BillingController extends Controller
     {
         $this->authorize('view billing');
         try {
-            $billing = Billing::with('items', 'vehicleCase')->findOrFail($id);
+            $billing = Billing::with('items.vehicleCase', 'vehicleCase')->findOrFail($id);
             $payments = Payment::where('billing_id', $billing->id)->get();
             return view('dashboard.billings.show', compact('billing', 'payments'));
         } catch (\Throwable $th) {
@@ -302,7 +302,7 @@ class BillingController extends Controller
     public function verifyBilling(string $bill_no)
     {
         try {
-            $billing = Billing::with('items', 'vehicleCase')->where('bill_no', $bill_no)->first();
+            $billing = Billing::with('items.vehicleCase', 'vehicleCase')->where('bill_no', $bill_no)->first();
             if (!$billing) {
                 return redirect()->back()->with('error', "Bill not found!");
             }

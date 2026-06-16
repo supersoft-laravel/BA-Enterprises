@@ -290,7 +290,7 @@
             <thead>
                 <tr>
                     <th>Services</th>
-                    <th>Date</th>
+                    <th>Vehicle No</th>
                     <th>Amount (PKR)</th>
                 </tr>
             </thead>
@@ -298,7 +298,7 @@
                 @foreach ($billing->items as $item)
                     <tr>
                         <td>{{ $item->item_name }}</td>
-                        <td>{{ $item->service_date ? \Carbon\Carbon::parse($item->service_date)->format('d/m/Y') : '—' }}</td>
+                        <td>{{ $item->vehicleCase->vehicle_no ?? '—' }}</td>
                         <td class="text-right">{{ \App\Helpers\Helper::formatCurrency($item->item_amount) }}</td>
                     </tr>
                 @endforeach
