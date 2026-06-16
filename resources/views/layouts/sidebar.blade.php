@@ -120,6 +120,12 @@
                 </a>
             </li>
         @endcan
+        <li class="menu-item {{ request()->routeIs('dashboard.reports.*') ? 'active' : '' }}">
+            <a href="{{ route('dashboard.reports.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons ti ti-chart-bar"></i>
+                <div>{{ __('Reports') }}</div>
+            </a>
+        </li>
         @canany(['view user', 'view archived user', 'view staff'])
             <li
                 class="menu-item {{ request()->routeIs('dashboard.user.*') || request()->routeIs('dashboard.archived-user.*') || request()->routeIs('dashboard.other-users.*') ? 'open' : '' }}">

@@ -18,6 +18,7 @@ use App\Http\Controllers\Dashboard\OtherUserController;
 use App\Http\Controllers\Dashboard\PaymentController;
 use App\Http\Controllers\Dashboard\PermitController;
 use App\Http\Controllers\Dashboard\ProfileController;
+use App\Http\Controllers\Dashboard\ReportController;
 use App\Http\Controllers\Dashboard\RolePermission\PermissionController;
 use App\Http\Controllers\Dashboard\RolePermission\RoleController;
 use App\Http\Controllers\Dashboard\SettingController;
@@ -221,6 +222,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::resource('billings', BillingController::class);
             Route::get('billings-custom/form', [BillingController::class, 'customInvoiceForm'])->name('billings.custom-invoice');
             Route::post('billings-custom/generate', [BillingController::class, 'generateCustomInvoice'])->name('billings.custom-invoice.generate');
+
+            Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+            Route::post('reports/generate', [ReportController::class, 'generate'])->name('reports.generate');
 
             Route::resource('payments', PaymentController::class);
 
