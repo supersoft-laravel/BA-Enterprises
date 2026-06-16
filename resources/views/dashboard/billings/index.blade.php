@@ -33,7 +33,7 @@
                         <tr>
                             <th>{{ __('Sr.') }}</th>
                             <th>{{ __('Bill No') }}</th>
-                            <th>{{ __('Customer Name') }}</th>
+                            <th>{{ __('Customer') }}</th>
                             <th>{{ __('Total') }}</th>
                             <th>{{ __('Paid') }}</th>
                             <th>{{ __('Remaining') }}</th>
@@ -88,8 +88,8 @@
                                                 <a href="{{ route('dashboard.billings.show', $billing->id) }}"
                                                     class="btn btn-icon btn-text-info waves-effect waves-light rounded-pill me-1"
                                                     data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    title="{{ __('View Billing') }}">
-                                                    <i class="ti ti-eye ti-md"></i>
+                                                    title="{{ __('Print Billing') }}" target="_blank">
+                                                    <i class="ti ti-printer ti-md"></i>
                                                 </a>
                                             </span>
                                         @endcan
