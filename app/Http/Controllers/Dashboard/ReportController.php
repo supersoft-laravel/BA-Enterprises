@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\Billing;
 use App\Models\BillingItem;
+use App\Models\Customer;
 use App\Models\VehicleCase;
 use Illuminate\Http\Request;
+
 
 class ReportController extends Controller
 {
@@ -49,8 +51,12 @@ class ReportController extends Controller
             ->get()
             ->keyBy('customer_id');
 
+        // Customer summary: each customer with their cases in this period
+        $customers = Customer::whereIn('id', $customerIds)->orderBy('name')->get();
+
         return view('dashboard.reports.result', compact(
-            'cases', 'itemsByCase', 'caseTotals', 'billings', 'startDate', 'endDate'
+            'cases', 'itemsByCase', 'caseTotals', 'billings', 'customers', 'startDate', 'endDate'
         ));
     }
+
 }
