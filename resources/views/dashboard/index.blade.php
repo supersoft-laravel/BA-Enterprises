@@ -1241,12 +1241,15 @@ const AJAX_STORE_CUSTOMER_URL = "{{ route('dashboard.customers.store-ajax') }}";
             // Collect data
             const data = collectFormData();
 
-            // Log to console for inspection
-            console.log('=== FORM SUBMISSION ===');
-            console.log('Form Data:', data);
-            console.log('Common:', data.common);
-            console.log('Services:', data.services);
-            console.log('Totals:', data.totals);
+            // Require a customer to be selected
+            if (!data.common.customerId) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Customer Required',
+                    text: 'Please select a customer before saving the record.',
+                });
+                return;
+            }
 
             // Show loading state
             const saveBtn = $('finalSaveRecordBtn');

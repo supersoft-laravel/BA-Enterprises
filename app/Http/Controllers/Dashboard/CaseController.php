@@ -646,7 +646,7 @@ class CaseController extends Controller
             'common.city'        => 'required|string|max:255',
             'common.vehicleNo'      => 'nullable|string|max:255',
             'common.newVehicleNo'   => 'nullable|string|max:255',
-            'common.customerId'     => 'nullable|exists:customers,id',
+            'common.customerId'     => 'required|exists:customers,id',
             'common.partyName'      => 'nullable|string|max:255',
             'common.partyMobile'    => 'nullable|string|max:255',
             'common.vendorName'     => 'nullable|string|max:255',
