@@ -240,40 +240,6 @@
                 </div>
                 @endif
 
-                {{-- File Return Details --}}
-                @if($case->fileReturn)
-                <div class="col-md-6">
-                    <div class="card border-primary shadow-sm h-100">
-                        <div class="card-header bg-label-primary">
-                            <strong><i class="ti ti-file-return me-2"></i> File Return Details</strong>
-                        </div>
-                        <div class="card-body mt-3">
-                            @if(!$case->transfer)
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h6 class="text-dark">From</h6>
-                                    <p><strong>Name:</strong> {{ $case->fileReturn->from_name ?? 'N/A' }}</p>
-                                    <p><strong>S/O:</strong> {{ $case->fileReturn->from_s_o ?? 'N/A' }}</p>
-                                    <p><strong>NIC:</strong> {{ $case->fileReturn->from_nic ?? 'N/A' }}</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <h6 class="text-dark">To</h6>
-                                    <p><strong>Name:</strong> {{ $case->fileReturn->to_name ?? 'N/A' }}</p>
-                                    <p><strong>S/O:</strong> {{ $case->fileReturn->to_s_o ?? 'N/A' }}</p>
-                                    <p><strong>NIC:</strong> {{ $case->fileReturn->to_nic ?? 'N/A' }}</p>
-                                </div>
-                            </div>
-                            @else
-                            <p class="text-muted mb-0">
-                                <i class="ti ti-info-circle me-1"></i>
-                                Party details are captured in the Transfer section.
-                            </p>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-                @endif
-
                 {{-- Alteration Details --}}
                 @if($case->alteration)
                 <div class="col-md-6">
@@ -748,7 +714,7 @@
 
     const GROUP_MAP = {
         'Transfer':     'svcGrpTransfer',
-        'File Return':  @if($case->transfer) null @else 'svcGrpTransfer' @endif,
+        'File Return':  null,
         'Alteration':   'svcGrpAlteration',
         'Route Permit': 'svcGrpRoutePermit',
         'FC':           'svcGrpFC',

@@ -172,7 +172,7 @@
 
             {{-- ── WORK DETAILS (EDITABLE) ── --}}
             @php
-                $hasAnyWork = $case->transfer || $case->alteration || $case->tax || $case->insurance || $case->permit || $case->fitness || $case->fileReturn || $case->other;
+                $hasAnyWork = $case->transfer || $case->alteration || $case->tax || $case->insurance || $case->permit || $case->fitness || $case->other;
             @endphp
             @if($hasAnyWork)
             <div class="mt-5">
@@ -433,66 +433,6 @@
                                         <i class="ti ti-device-floppy me-1"></i> Save FC
                                     </button>
                                 </form>
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-
-                    {{-- ── FILE RETURN ── --}}
-                    @if($case->fileReturn)
-                    <div class="col-md-6">
-                        <div class="card border-primary shadow-sm h-100">
-                            <div class="card-header bg-label-primary">
-                                <strong><i class="ti ti-file-return me-2"></i> File Return Details</strong>
-                            </div>
-                            <div class="card-body mt-2">
-                                @if(!$case->transfer)
-                                <form action="{{ route('dashboard.cases.update-service', [$case->id, 'file-return']) }}" method="POST">
-                                    @csrf @method('PUT')
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <h6 class="text-primary mb-3">From</h6>
-                                            <div class="mb-2">
-                                                <label class="form-label">Name</label>
-                                                <input type="text" name="from_name" class="form-control" value="{{ old('from_name', $case->fileReturn->from_name) }}">
-                                            </div>
-                                            <div class="mb-2">
-                                                <label class="form-label">S/O</label>
-                                                <input type="text" name="from_s_o" class="form-control" value="{{ old('from_s_o', $case->fileReturn->from_s_o) }}">
-                                            </div>
-                                            <div class="mb-2">
-                                                <label class="form-label">NIC</label>
-                                                <input type="text" name="from_nic" class="form-control" value="{{ old('from_nic', $case->fileReturn->from_nic) }}">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <h6 class="text-primary mb-3">To</h6>
-                                            <div class="mb-2">
-                                                <label class="form-label">Name</label>
-                                                <input type="text" name="to_name" class="form-control" value="{{ old('to_name', $case->fileReturn->to_name) }}">
-                                            </div>
-                                            <div class="mb-2">
-                                                <label class="form-label">S/O</label>
-                                                <input type="text" name="to_s_o" class="form-control" value="{{ old('to_s_o', $case->fileReturn->to_s_o) }}">
-                                            </div>
-                                            <div class="mb-2">
-                                                <label class="form-label">NIC</label>
-                                                <input type="text" name="to_nic" class="form-control" value="{{ old('to_nic', $case->fileReturn->to_nic) }}">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3">
-                                        <button type="submit" class="btn btn-primary btn-sm">
-                                            <i class="ti ti-device-floppy me-1"></i> Save File Return
-                                        </button>
-                                    </div>
-                                </form>
-                                @else
-                                <p class="text-muted mb-0">
-                                    <i class="ti ti-info-circle me-1"></i>
-                                    Party details are captured in the Transfer section.
-                                </p>
-                                @endif
                             </div>
                         </div>
                     </div>
