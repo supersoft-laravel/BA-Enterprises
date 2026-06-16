@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\Billing;
 use App\Models\BillingItem;
+use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\VehicleCase;
@@ -313,6 +314,53 @@ class BillingController extends Controller
             Log::error("Billing Show Failed:" . $th->getMessage());
             return redirect()->back()->with('error', "Something went wrong! Please try again later");
         }
+    }
+
+    public function customInvoiceForm()
+    {
+        $this->authorize('view billing');
+        $customers = Customer::whereHas('billing')->orderBy('name')->get();
+        return view('dashboard.billings.custom-invoice-form', compact('customers'));
+    }
+
+    public function generateCustomInvoice(Request $request)
+    {
+        $this->authorize('view billing');
+
+        $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'n_cases'     => 'required|integer|min:1|max:10',
+        ]);
+
+        $billing = Billing::with('items.vehicleCase', 'vehicleCase')
+            ->where('customer_id', $request->customer_id)
+            ->first();
+
+        if (!$billing) {
+            return redirect()->back()->with('error', 'No billing found for this customer.');
+        }
+
+        $payments = Payment::where('billing_id', $billing->id)
+            ->orderBy('payment_date', 'desc')->get();
+
+        // Latest N cases for this customer (ordered by case_date desc)
+        $latestCaseIds = VehicleCase::where('customer_id', $request->customer_id)
+            ->orderBy('case_date', 'desc')
+            ->limit($request->n_cases)
+            ->pluck('id');
+
+        // Items belonging to those N cases only
+        $selectedItems = BillingItem::where('billing_id', $billing->id)
+            ->whereIn('vehicle_case_id', $latestCaseIds)
+            ->with('vehicleCase')
+            ->get();
+
+        $selectedTotal = $selectedItems->sum('item_amount');
+        $oldBalance    = $billing->total_amount - $selectedTotal;
+
+        return view('frontend.custom-bill', compact(
+            'billing', 'payments', 'selectedItems', 'oldBalance'
+        ));
     }
 
     public function testing()

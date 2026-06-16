@@ -219,6 +219,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::resource('fitness', FitnessController::class);
 
             Route::resource('billings', BillingController::class);
+            Route::get('billings-custom/form', [BillingController::class, 'customInvoiceForm'])->name('billings.custom-invoice');
+            Route::post('billings-custom/generate', [BillingController::class, 'generateCustomInvoice'])->name('billings.custom-invoice.generate');
 
             Route::resource('payments', PaymentController::class);
 

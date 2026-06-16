@@ -18,13 +18,11 @@
         <!-- Billings List Table -->
         <div class="card">
             <div class="card-header">
-                @canany(['create billing'])
-                    <button class="add-new btn btn-primary waves-effect waves-light disabled" disabled
-                            data-bs-toggle="tooltip" data-bs-placement="right"
-                            title="Billing is auto-created when a case is submitted from the dashboard.">
-                        <i class="ti ti-plus me-0 me-sm-1 ti-xs"></i><span
-                            class="d-none d-sm-inline-block">{{ __('Add New Billing') }}</span>
-                    </button>
+                @canany(['view billing'])
+                    <a href="{{ route('dashboard.billings.custom-invoice') }}"
+                       class="btn btn-primary waves-effect waves-light">
+                        <i class="ti ti-file-invoice me-1"></i>Customer Invoice
+                    </a>
                 @endcan
             </div>
             <div class="card-datatable table-responsive">
