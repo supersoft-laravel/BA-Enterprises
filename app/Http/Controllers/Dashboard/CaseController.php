@@ -68,7 +68,10 @@ class CaseController extends Controller
                 ->selectRaw('vehicle_case_id, SUM(item_amount) as total')
                 ->pluck('total', 'vehicle_case_id');
 
-            return view('dashboard.cases.customer-cases', compact('customer', 'cases', 'billing', 'caseAmounts'));
+            return response()
+                ->view('dashboard.cases.customer-cases', compact('customer', 'cases', 'billing', 'caseAmounts'))
+                ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                ->header('Pragma', 'no-cache');
         } catch (\Throwable $th) {
             Log::error("Customer Cases Failed:" . $th->getMessage());
             return redirect()->back()->with('error', "Something went wrong! Please try again later");
