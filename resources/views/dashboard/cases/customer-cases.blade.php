@@ -152,6 +152,12 @@
                                             <i class="ti ti-eye ti-md"></i>
                                         </a>
                                     @endcan
+                                    <a href="{{ route('dashboard.cases.invoice', $case->id) }}"
+                                       class="btn btn-icon btn-text-secondary waves-effect waves-light rounded-pill me-1"
+                                       data-bs-toggle="tooltip" data-bs-placement="top"
+                                       title="{{ __('Print Invoice') }}" target="_blank">
+                                        <i class="ti ti-printer ti-md"></i>
+                                    </a>
                                 </td>
                             @endcan
                         </tr>
