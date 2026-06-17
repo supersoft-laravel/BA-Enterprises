@@ -93,7 +93,7 @@ class BillingController extends Controller
 
             do {
                 $billNo = 'BA-' . $typeCode . '-' . str_pad($billing->id, 5, '0', STR_PAD_LEFT);
-            } while (Billing::where('bill_no', $billNo)->exists());
+            } while (Billing::withoutGlobalScopes()->where('bill_no', $billNo)->exists());
 
             $billing->bill_no = $billNo;
             $billing->save();

@@ -175,7 +175,8 @@ class CustomerController extends Controller
 
     private function generateCustomerCode(): string
     {
-        $last = Customer::orderBy('id', 'desc')->first();
+        // withoutGlobalScopes() — codes must be unique across ALL users, not just the current one
+        $last = Customer::withoutGlobalScopes()->orderBy('id', 'desc')->first();
         $next = 1;
 
         if ($last) {
@@ -186,7 +187,7 @@ class CustomerController extends Controller
         do {
             $code = 'CUST-' . str_pad($next, 4, '0', STR_PAD_LEFT);
             $next++;
-        } while (Customer::where('customer_code', $code)->exists());
+        } while (Customer::withoutGlobalScopes()->where('customer_code', $code)->exists());
 
         return $code;
     }

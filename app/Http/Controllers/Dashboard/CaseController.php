@@ -164,7 +164,7 @@ class CaseController extends Controller
 
         try {
             DB::beginTransaction();
-            $caseNo = 'CASE-' . now()->format('Y') . '-' . Str::padLeft(VehicleCase::count() + 1, 4, '0');
+            $caseNo = 'CASE-' . now()->format('Y') . '-' . Str::padLeft(VehicleCase::withoutGlobalScopes()->count() + 1, 4, '0');
 
             // Create Main Vehicle Case
             $vehicleCase = VehicleCase::create([
@@ -1225,7 +1225,8 @@ class CaseController extends Controller
         $year = date('Y');
         $month = date('m');
 
-        $lastBill = Billing::whereYear('created_at', $year)
+        $lastBill = Billing::withoutGlobalScopes()
+                        ->whereYear('created_at', $year)
                         ->whereMonth('created_at', $month)
                         ->orderBy('id', 'desc')
                         ->first();
@@ -1271,6 +1272,12 @@ class CaseController extends Controller
 
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+
+        // exists: validation bypasses Eloquent scopes — verify ownership explicitly
+        $case = VehicleCase::find($request->input('case_id'));
+        if (!$case) {
+            return response()->json(['error' => 'Case not found or unauthorized.'], 403);
         }
 
         try {

@@ -20,7 +20,7 @@ class PaymentController extends Controller
     {
         $this->authorize('view payment');
         try {
-            $payments = Payment::with('billing.vehicleCase')->latest()->get();
+            $payments = Payment::whereHas('billing')->with('billing.vehicleCase')->latest()->get();
             return view('dashboard.payments.index', compact('payments'));
         } catch (\Throwable $th) {
             Log::error("Payment Index Failed:" . $th->getMessage());
@@ -167,7 +167,8 @@ class PaymentController extends Controller
         try {
             DB::beginTransaction();
 
-            $payment = Payment::findOrFail($id);
+            // whereHas('billing') applies the Billing global scope — blocks access to other users' payments
+            $payment = Payment::whereHas('billing')->findOrFail($id);
 
             // 🔹 Get related billing
             $billing = Billing::lockForUpdate()->findOrFail($payment->billing_id);
