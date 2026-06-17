@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\OwnedByUserScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -14,6 +15,7 @@ class Billing extends Model
     protected $fillable = [
         'vehicle_case_id',
         'customer_id',
+        'created_by',
         'billing_type',
         'bill_no',
         'total_amount',
@@ -24,6 +26,17 @@ class Billing extends Model
         'description',
         'status',
     ];
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new OwnedByUserScope());
+
+        static::creating(function ($model) {
+            if (is_null($model->created_by) && auth()->check()) {
+                $model->created_by = auth()->id();
+            }
+        });
+    }
 
     public function items()
     {

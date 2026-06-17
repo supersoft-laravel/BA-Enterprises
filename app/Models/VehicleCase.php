@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\OwnedByUserScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,6 +14,7 @@ class VehicleCase extends Model
 
     protected $fillable = [
         'customer_id',
+        'created_by',
 
         // Common Info
         'city',
@@ -41,6 +43,17 @@ class VehicleCase extends Model
         // Status
         'status',
     ];
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new OwnedByUserScope());
+
+        static::creating(function ($model) {
+            if (is_null($model->created_by) && auth()->check()) {
+                $model->created_by = auth()->id();
+            }
+        });
+    }
 
     public function customer()
     {
