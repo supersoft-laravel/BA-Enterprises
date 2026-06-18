@@ -70,7 +70,8 @@
         .status-case::before { content: "[CASE INVOICE] "; }
 
         /* QR */
-        .qr-section { margin: 8px 0 5px; text-align: center; }
+        .qr-section { margin: 8px 0 5px; display: flex; justify-content: space-around; align-items: flex-start; gap: 4px; }
+        .qr-block   { flex: 1; text-align: center; }
         .qr-code    { width: 80px; height: 80px; margin: 0 auto 3px; border: 1px solid #000; padding: 2px; display: block; }
         .qr-label   { font-size: 9px; font-weight: bold; margin: 2px 0; }
         .qr-url     { font-size: 8px; color: #000; word-break: break-all; margin: 1px 0; }
@@ -208,11 +209,15 @@
     {{-- QR CODE --}}
     <div class="double-separator"></div>
     <div class="qr-section">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ urlencode(route('dashboard.cases.invoice', $case->id)) }}&margin=0&ecc=H"
-             alt="Case Invoice QR" class="qr-code">
-        <div class="qr-label">SCAN TO VIEW</div>
-        <div class="qr-url">Case #{{ $case->id }} &mdash; {{ $case->vehicle_no }}</div>
-        <div class="qr-label" style="font-weight:normal">Case Invoice</div>
+        <div class="qr-block">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ urlencode(route('dashboard.cases.invoice', $case->id)) }}&margin=0&ecc=H"
+                 alt="Case Invoice QR" class="qr-code">
+            <div class="qr-label">Scan to verify</div>
+        </div>
+        <div class="qr-block">
+            <img src="{{ asset('assets/img/meezan-qr.jpeg') }}" alt="Pay via Meezan Bank" class="qr-code">
+            <div class="qr-label">Scan to pay</div>
+        </div>
     </div>
 
     {{-- FOOTER --}}
