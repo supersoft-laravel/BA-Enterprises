@@ -70,6 +70,7 @@
                             <table class="table table-bordered">
                                 <thead>
                                     <tr>
+                                        <th>Vehicle No</th>
                                         <th>Item</th>
                                         <th width="200">Amount</th>
                                     </tr>
@@ -77,6 +78,11 @@
                                 <tbody>
                                     @foreach ($billing->items as $index => $item)
                                         <tr>
+                                            <td style="white-space:nowrap;">
+                                                <span class="badge bg-label-secondary">
+                                                    {{ $item->vehicleCase->vehicle_no ?? '—' }}
+                                                </span>
+                                            </td>
                                             <td>
                                                 {{ $item->item_name }}
                                                 <input type="hidden" name="items[{{ $index }}][name]"

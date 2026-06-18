@@ -160,7 +160,7 @@ class BillingController extends Controller
     {
         $this->authorize('update billing');
         try {
-            $billing = Billing::with('items', 'vehicleCase')->findOrFail($id);
+            $billing = Billing::with('items.vehicleCase', 'vehicleCase')->findOrFail($id);
             $cases = VehicleCase::latest()->get();
             return view('dashboard.billings.edit', compact('billing', 'cases'));
         } catch (\Throwable $th) {
