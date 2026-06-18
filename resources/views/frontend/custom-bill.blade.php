@@ -114,7 +114,9 @@
         <img src="{{ asset(\App\Helpers\Helper::getLogoLight()) }}" alt="Logo" class="logo">
         <div class="shop-name">{{ \App\Helpers\Helper::getCompanyName() }}</div>
         <div class="shop-address">{{ \App\Helpers\Helper::getCompanyAddress() }}</div>
-        <div class="shop-phone">Ph: {{ \App\Helpers\Helper::getCompanyPhone() ?? '-' }}</div>
+        @foreach(array_filter(explode(',', \App\Helpers\Helper::getCompanyPhone())) as $phone)
+            <div class="shop-phone">Ph: {{ trim($phone) }}</div>
+        @endforeach
 
         <div class="separator"></div>
 

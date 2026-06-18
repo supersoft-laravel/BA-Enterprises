@@ -264,7 +264,9 @@
         <div class="header">
             <img style="height: 40px;" src="{{ asset(\App\Helpers\Helper::getLogoLight()) }}" alt="Logo">
             <p>{{ \App\Helpers\Helper::getCompanyAddress() ?? 'Karachi, Pakistan' }}</p>
-            <p>{{ \App\Helpers\Helper::getCompanyPhone() ?? '' }}</p>
+            @foreach(array_filter(explode(',', \App\Helpers\Helper::getCompanyPhone())) as $phone)
+                <p>Ph: {{ trim($phone) }}</p>
+            @endforeach
             <p>{{ \App\Helpers\Helper::getCompanyEmail() ?? '' }}</p>
         </div>
 

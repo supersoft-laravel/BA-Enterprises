@@ -39,7 +39,7 @@ class Helper
     }
     public static function getCompanyPhone()
     {
-        return CompanySetting::first()->phone ?? '';
+        return CompanySetting::first()->phone_number ?? '';
     }
     public static function getCompanyEmail()
     {

@@ -123,7 +123,9 @@
         <img src="{{ asset(\App\Helpers\Helper::getLogoLight()) }}" alt="Company Logo" class="logo">
         <div class="shop-name">{{ \App\Helpers\Helper::getCompanyName() }}</div>
         <div class="shop-address">{{ \App\Helpers\Helper::getCompanyAddress() }}</div>
-        <div class="shop-phone">Ph: {{ \App\Helpers\Helper::getCompanyPhone() ?? '-' }}</div>
+        @foreach(array_filter(explode(',', \App\Helpers\Helper::getCompanyPhone())) as $phone)
+            <div class="shop-phone">Ph: {{ trim($phone) }}</div>
+        @endforeach
 
         <div class="separator"></div>
 
@@ -142,10 +144,6 @@
         <div class="info-row">
             <span class="info-label">Vehicle:</span>
             <span>{{ $case->vehicle_no ?? 'N/A' }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Make/Year:</span>
-            <span>{{ trim(($case->vehicle_make ?? '') . ' ' . ($case->vehicle_model ?? '')) ?: '—' }}</span>
         </div>
         <div class="separator"></div>
         <div class="info-row">
