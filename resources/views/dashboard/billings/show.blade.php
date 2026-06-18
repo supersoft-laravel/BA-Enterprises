@@ -210,6 +210,14 @@
         /* ===== QR CODE SECTION ===== */
         .qr-section {
             margin: 8px 0 5px;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            gap: 4px;
+        }
+
+        .qr-block {
+            flex: 1;
             text-align: center;
         }
 
@@ -514,8 +522,15 @@
         <!-- ===== QR CODE FOR VERIFICATION ===== -->
         <div class="double-separator"></div>
         <div class="qr-section">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ urlencode(route('frontend.billing.verify', $billing->bill_no ?? '00000')) }}&margin=0&ecc=H"
-                alt="Verify Bill" class="qr-code">
+            <div class="qr-block">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ urlencode(route('frontend.billing.verify', $billing->bill_no ?? '00000')) }}&margin=0&ecc=H"
+                    alt="Verify Bill" class="qr-code">
+                <div class="qr-label">Scan to verify</div>
+            </div>
+            <div class="qr-block">
+                <img src="{{ asset('assets/img/meezan-qr.jpeg') }}" alt="Pay via Meezan Bank" class="qr-code">
+                <div class="qr-label">Scan to pay</div>
+            </div>
         </div>
 
         <!-- ===== FOOTER ===== -->
