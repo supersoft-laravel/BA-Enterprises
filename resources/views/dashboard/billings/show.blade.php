@@ -411,12 +411,6 @@
         <!-- ===== CUSTOMER / CASE INFO ===== -->
         <div class="info-block">
             <div class="info-row">
-                <span class="info-label">Make/Year:</span>
-                <span class="blade-placeholder">{{ $billing->vehicleCase->make ?? 'Toyota' }}
-                    {{ $billing->vehicleCase->model ?? '2020' }}</span>
-            </div>
-            <div class="separator"></div>
-            <div class="info-row">
                 <span class="info-label">Billed To:</span>
                 <span class="blade-placeholder">{{ $billing->billing_name ?? 'Walk-in Customer' }}</span>
             </div>
@@ -522,9 +516,6 @@
         <div class="qr-section">
             <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ urlencode(route('frontend.billing.verify', $billing->bill_no ?? '00000')) }}&margin=0&ecc=H"
                 alt="Verify Bill" class="qr-code">
-            <div class="qr-label">SCAN TO VERIFY</div>
-            <div class="qr-url blade-placeholder">{{ route('frontend.billing.verify', $billing->bill_no ?? '00000') }}</div>
-            <div class="qr-label" style="font-weight:normal">Authenticity Check</div>
         </div>
 
         <!-- ===== FOOTER ===== -->
