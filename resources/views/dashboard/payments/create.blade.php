@@ -31,7 +31,7 @@
                                 <option value="" selected disabled>Select Billing</option>
                                 @foreach ($billings as $bill)
                                     <option value="{{ $bill->id }}" data-remaining="{{ $bill->remaining_amount }}" {{ $selectedBilling == $bill->id ? 'selected' : '' }}>
-                                        {{ $bill->vehicleCase->vehicle_no }} - {{ $bill->vehicleCase->party_name }} - ({{ $bill->bill_no }})
+                                        {{ $bill->vehicleCase?->vehicle_no ?? 'N/A' }} - {{ $bill->vehicleCase?->party_name ?? 'N/A' }} - ({{ $bill->bill_no }})
                                     </option>
                                 @endforeach
                             </select>
