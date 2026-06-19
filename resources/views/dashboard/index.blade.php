@@ -1063,16 +1063,30 @@ const AJAX_STORE_CUSTOMER_URL = "{{ route('dashboard.customers.store-ajax') }}";
         writeVehicleFields();
         initDatePicker();
 
-        // Customer dropdown: sync partyName/partyMobile when selection changes
+        // Customer dropdown: searchable Select2 + sync partyName/partyMobile on change
         const custSel = $('comm_customerId');
         if (custSel) {
-            custSel.addEventListener('change', function() {
-                const selVal = this.value;
-                vehicleState.customerId = selVal;
-                const cust = CUSTOMERS_DATA.find(c => String(c.id) === String(selVal));
-                vehicleState.partyName   = cust ? cust.name          : '';
-                vehicleState.partyMobile = cust ? (cust.mobile || '') : '';
-            });
+            if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+                jQuery('#comm_customerId').select2({
+                    placeholder: 'Search by name, code or mobile…',
+                    allowClear: true,
+                    width: '100%',
+                }).on('change', function() {
+                    const selVal = jQuery(this).val() || '';
+                    vehicleState.customerId = selVal;
+                    const cust = CUSTOMERS_DATA.find(c => String(c.id) === String(selVal));
+                    vehicleState.partyName   = cust ? cust.name          : '';
+                    vehicleState.partyMobile = cust ? (cust.mobile || '') : '';
+                });
+            } else {
+                custSel.addEventListener('change', function() {
+                    const selVal = this.value;
+                    vehicleState.customerId = selVal;
+                    const cust = CUSTOMERS_DATA.find(c => String(c.id) === String(selVal));
+                    vehicleState.partyName   = cust ? cust.name          : '';
+                    vehicleState.partyMobile = cust ? (cust.mobile || '') : '';
+                });
+            }
         }
 
         // Add event listeners to save values on input
