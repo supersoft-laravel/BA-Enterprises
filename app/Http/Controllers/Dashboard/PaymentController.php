@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\Billing;
+use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -16,12 +17,19 @@ class PaymentController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('view payment');
         try {
-            $payments = Payment::whereHas('billing')->with(['billing' => fn($q) => $q->with(['vehicleCase' => fn($q2) => $q2->withoutGlobalScopes()])])->latest()->get();
-            return view('dashboard.payments.index', compact('payments'));
+            $payments = Payment::whereHas('billing')
+                ->with(['billing' => fn($q) => $q->with(['vehicleCase' => fn($q2) => $q2->withoutGlobalScopes()])])
+                ->when($request->filled('payment_method'), fn($q) => $q->where('payment_method', $request->payment_method))
+                ->when($request->filled('customer_id'), fn($q) => $q->whereHas('billing', fn($q2) => $q2->where('customer_id', $request->customer_id)))
+                ->latest()->get();
+
+            $customers = Customer::orderBy('name')->get();
+
+            return view('dashboard.payments.index', compact('payments', 'customers'));
         } catch (\Throwable $th) {
             Log::error("Payment Index Failed:" . $th->getMessage());
             return redirect()->back()->with('error', "Something went wrong! Please try again later");
