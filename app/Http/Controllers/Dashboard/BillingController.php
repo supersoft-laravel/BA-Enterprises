@@ -19,13 +19,25 @@ class BillingController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('view billing');
 
         try {
-            $billings = Billing::with('items', 'vehicleCase')->latest()->get();
-            return view('dashboard.billings.index', compact('billings'));
+            $billings    = Billing::with('items', 'vehicleCase')->latest()->get();
+            $allBillings = Billing::orderBy('bill_no')->get(['id', 'bill_no']);
+            $services    = BillingItem::distinct()->orderBy('item_name')->pluck('item_name');
+
+            $filteredItems = null;
+            if ($request->filled('bill_id') && $request->filled('service')) {
+                $filteredItems = BillingItem::where('billing_id', $request->bill_id)
+                    ->whereHas('billing')
+                    ->where('item_name', $request->service)
+                    ->with(['vehicleCase' => fn($q) => $q->withoutGlobalScopes()])
+                    ->get();
+            }
+
+            return view('dashboard.billings.index', compact('billings', 'allBillings', 'services', 'filteredItems'));
         } catch (\Throwable $th) {
             Log::error("Billing Index Failed:" . $th->getMessage());
             return redirect()->back()->with('error', "Something went wrong! Please try again later");

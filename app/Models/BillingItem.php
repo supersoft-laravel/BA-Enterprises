@@ -19,6 +19,11 @@ class BillingItem extends Model
         'service_date',
     ];
 
+    public function billing()
+    {
+        return $this->belongsTo(Billing::class, 'billing_id');
+    }
+
     public function vehicleCase()
     {
         return $this->belongsTo(VehicleCase::class, 'vehicle_case_id');

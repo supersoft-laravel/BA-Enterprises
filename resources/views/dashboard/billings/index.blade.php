@@ -17,14 +17,94 @@
     <div class="container-xxl flex-grow-1 container-p-y">
         <!-- Billings List Table -->
         <div class="card">
-            <div class="card-header">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-3">
                 @canany(['view billing'])
                     <a href="{{ route('dashboard.billings.custom-invoice') }}"
                        class="btn btn-primary waves-effect waves-light">
                         <i class="ti ti-file-invoice me-1"></i>Custom Invoice
                     </a>
                 @endcan
+
+                <form method="GET" action="{{ route('dashboard.billings.index') }}" class="d-flex align-items-center gap-2 flex-wrap">
+                    <select name="bill_id" class="form-select form-select-sm" style="width:210px;">
+                        <option value="">Select Bill</option>
+                        @foreach($allBillings as $bill)
+                            <option value="{{ $bill->id }}" {{ request('bill_id') == $bill->id ? 'selected' : '' }}>
+                                {{ $bill->bill_no }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    <select name="service" class="form-select form-select-sm" style="width:190px;">
+                        <option value="">Select Service</option>
+                        @foreach($services as $svc)
+                            <option value="{{ $svc }}" {{ request('service') == $svc ? 'selected' : '' }}>{{ $svc }}</option>
+                        @endforeach
+                    </select>
+
+                    <button type="submit" class="btn btn-sm btn-primary waves-effect waves-light">
+                        <i class="ti ti-filter ti-xs me-1"></i>Filter
+                    </button>
+
+                    @if(request('bill_id') || request('service'))
+                        <a href="{{ route('dashboard.billings.index') }}" class="btn btn-sm btn-outline-secondary waves-effect">
+                            <i class="ti ti-x ti-xs me-1"></i>Clear
+                        </a>
+                    @endif
+                </form>
             </div>
+        {{-- FILTER RESULTS --}}
+        @if($filteredItems !== null)
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    Results — <span class="text-primary">{{ request('service') }}</span>
+                    &nbsp;in&nbsp;
+                    <span class="text-primary">{{ $allBillings->firstWhere('id', request('bill_id'))->bill_no ?? '' }}</span>
+                    <span class="badge bg-label-secondary ms-2">{{ $filteredItems->count() }} item(s)</span>
+                </h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table border-top mb-0">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Sr.') }}</th>
+                            <th>{{ __('Vehicle No') }}</th>
+                            <th>{{ __('Service') }}</th>
+                            <th>{{ __('Amount') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($filteredItems as $i => $item)
+                            <tr>
+                                <td>{{ $i + 1 }}</td>
+                                <td>
+                                    <span class="badge bg-label-secondary">
+                                        {{ $item->vehicleCase?->vehicle_no ?? '—' }}
+                                    </span>
+                                </td>
+                                <td>{{ $item->item_name }}</td>
+                                <td class="fw-semibold">{{ \App\Helpers\Helper::formatCurrency($item->item_amount) }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">No items found for this filter.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                    @if($filteredItems->count() > 0)
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end fw-bold">Total</td>
+                            <td class="fw-bold text-primary">{{ \App\Helpers\Helper::formatCurrency($filteredItems->sum('item_amount')) }}</td>
+                        </tr>
+                    </tfoot>
+                    @endif
+                </table>
+            </div>
+        </div>
+        @endif
+
             <div class="card-datatable table-responsive">
                 <table class="datatables-users table border-top custom-datatables billings-table">
                     <thead>
