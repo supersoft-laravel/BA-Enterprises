@@ -75,6 +75,24 @@
                                 </span>
                             @enderror
                         </div>
+                        <div class="mb-4 col-md-6">
+                            <label for="adjustment_amount" class="form-label">{{ __('Adjustment Amount') }} <small class="text-muted">(deduction / counter bill)</small></label>
+                            <input class="form-control @error('adjustment_amount') is-invalid @enderror" type="number"
+                                id="adjustment_amount" name="adjustment_amount" placeholder="0"
+                                value="{{ old('adjustment_amount', 0) }}" step="0.01" min="0" />
+                            @error('adjustment_amount')
+                                <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                            @enderror
+                        </div>
+                        <div class="mb-4 col-md-6">
+                            <label for="adjustment_note" class="form-label">{{ __('Adjustment Note') }} <small class="text-muted">(optional)</small></label>
+                            <input class="form-control @error('adjustment_note') is-invalid @enderror" type="text"
+                                id="adjustment_note" name="adjustment_note" placeholder="e.g. Counter Bill / Discount"
+                                value="{{ old('adjustment_note') }}" />
+                            @error('adjustment_note')
+                                <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                            @enderror
+                        </div>
                         <div class="mb-4 col-md-12 billingItems">
 
                         </div>
@@ -93,7 +111,7 @@
                             <label for="paid_amount" class="form-label">{{ __('Paid Amount') }}</label>
                             <input class="form-control @error('paid_amount') is-invalid @enderror" type="number"
                                 id="paid_amount" name="paid_amount" placeholder="{{ __('Enter paid amount') }}"
-                                value="{{ old('paid_amount') }}" step="0.01" />
+                                value="{{ old('paid_amount', 0) }}" step="0.01" />
                             @error('paid_amount')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -187,8 +205,8 @@
                 calculateTotal();
             });
 
-            // PAID CHANGE
-            $('#paid_amount').on('input', function() {
+            // PAID / ADJUSTMENT CHANGE
+            $('#paid_amount, #adjustment_amount').on('input', function() {
                 calculateRemaining();
             });
 
@@ -205,10 +223,11 @@
             }
 
             function calculateRemaining() {
-                let total = parseFloat($('#total_amount').val()) || 0;
-                let paid = parseFloat($('#paid_amount').val()) || 0;
+                let total      = parseFloat($('#total_amount').val()) || 0;
+                let paid       = parseFloat($('#paid_amount').val()) || 0;
+                let adjustment = parseFloat($('#adjustment_amount').val()) || 0;
 
-                let remaining = total - paid;
+                let remaining = total - adjustment - paid;
 
                 $('#remaining_amount').val(remaining.toFixed(2));
             }

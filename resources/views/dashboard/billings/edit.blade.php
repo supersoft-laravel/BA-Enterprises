@@ -65,9 +65,27 @@
                                 value="{{ $billing->billing_date }}">
                         </div>
 
+                        {{-- ADJUSTMENT --}}
+                        <div class="mb-4 col-md-6">
+                            <label class="form-label">{{ __('Adjustment Amount') }} <small class="text-muted">(deduction / counter bill)</small></label>
+                            <input type="number" id="adjustment_amount" name="adjustment_amount" class="form-control"
+                                value="{{ $billing->adjustment_amount ?? 0 }}" step="0.01" min="0">
+                        </div>
+                        <div class="mb-4 col-md-6">
+                            <label class="form-label">{{ __('Adjustment Note') }} <small class="text-muted">(optional)</small></label>
+                            <input type="text" id="adjustment_note" name="adjustment_note" class="form-control"
+                                value="{{ $billing->adjustment_note }}" placeholder="e.g. Counter Bill / Discount">
+                        </div>
+
                         {{-- ITEMS --}}
                         <div class="mb-4 col-md-12 billingItems">
-                            <table class="table table-bordered">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="ti ti-search text-muted"></i>
+                                <input type="text" id="vehicleSearch" class="form-control form-control-sm"
+                                    placeholder="Search by vehicle number..." style="max-width:280px;" autocomplete="off">
+                                <span id="vehicleSearchCount" class="text-muted" style="font-size:0.82rem;white-space:nowrap;"></span>
+                            </div>
+                            <table class="table table-bordered" id="itemsTable">
                                 <thead>
                                     <tr>
                                         <th>Vehicle No</th>
@@ -143,12 +161,31 @@
     <script>
         $(document).ready(function() {
 
+            // VEHICLE SEARCH FILTER
+            $('#vehicleSearch').on('input', function() {
+                const query = $(this).val().trim().toLowerCase();
+                let visible = 0;
+
+                $('#itemsTable tbody tr').each(function() {
+                    const vehicleNo = $(this).find('td:first-child .badge').text().trim().toLowerCase();
+                    if (!query || vehicleNo.includes(query)) {
+                        $(this).show();
+                        visible++;
+                    } else {
+                        $(this).hide();
+                    }
+                });
+
+                const total = $('#itemsTable tbody tr').length;
+                $('#vehicleSearchCount').text(query ? visible + ' of ' + total + ' rows' : '');
+            });
+
             // TOTAL CALC
             $(document).on('input', '.item-amount', function() {
                 calculateTotal();
             });
 
-            $('#paid_amount').on('input', function() {
+            $('#paid_amount, #adjustment_amount').on('input', function() {
                 calculateRemaining();
             });
 
@@ -164,10 +201,11 @@
             }
 
             function calculateRemaining() {
-                let total = parseFloat($('#total_amount').val()) || 0;
-                let paid = parseFloat($('#paid_amount').val()) || 0;
+                let total      = parseFloat($('#total_amount').val()) || 0;
+                let paid       = parseFloat($('#paid_amount').val()) || 0;
+                let adjustment = parseFloat($('#adjustment_amount').val()) || 0;
 
-                let remaining = total - paid;
+                let remaining = total - adjustment - paid;
 
                 $('#remaining_amount').val(remaining.toFixed(2));
             }
