@@ -73,6 +73,8 @@ class BillingController extends Controller
             'total_amount' => 'required|numeric|min:0',
             'paid_amount' => 'required|numeric|min:0',
             'remaining_amount' => 'required|numeric|min:0',
+            'adjustment_amount' => 'nullable|numeric|min:0',
+            'adjustment_note' => 'nullable|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.name' => 'required|string|max:255',
             'items.*.amount' => 'required|numeric|min:0',
@@ -85,6 +87,7 @@ class BillingController extends Controller
 
         try {
             DB::beginTransaction();
+            $adjustmentAmount = (float) ($request->adjustment_amount ?? 0);
             $billing = new Billing();
             $billing->vehicle_case_id = $request->vehicle_case_id;
             $billing->billing_type = $request->billing_type;
@@ -92,8 +95,10 @@ class BillingController extends Controller
             $billing->billing_date = $request->billing_date;
             $billing->total_amount = $request->total_amount;
             $billing->paid_amount = $request->paid_amount;
-            $billing->remaining_amount = $request->remaining_amount;
-            $billing->status = $request->remaining_amount == 0 ? 'paid' : ($request->paid_amount > 0 ? 'partial' : 'unpaid');
+            $billing->adjustment_amount = $adjustmentAmount;
+            $billing->adjustment_note = $request->adjustment_note;
+            $billing->remaining_amount = $request->total_amount - $adjustmentAmount - $request->paid_amount;
+            $billing->status = $billing->remaining_amount <= 0 ? 'paid' : ($request->paid_amount > 0 || $adjustmentAmount > 0 ? 'partial' : 'unpaid');
             $billing->description = $request->description;
             $billing->save();
 
@@ -196,6 +201,8 @@ class BillingController extends Controller
             'total_amount' => 'required|numeric|min:0',
             'paid_amount' => 'required|numeric|min:0',
             'remaining_amount' => 'required|numeric|min:0',
+            'adjustment_amount' => 'nullable|numeric|min:0',
+            'adjustment_note' => 'nullable|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.name' => 'required|string|max:255',
             'items.*.amount' => 'required|numeric|min:0',
@@ -212,18 +219,21 @@ class BillingController extends Controller
         try {
             DB::beginTransaction();
 
+            $adjustmentAmount = (float) ($request->adjustment_amount ?? 0);
             $billing = Billing::findOrFail($id);
             $billing->billing_type = $request->billing_type;
             $billing->billing_name = $request->billing_name;
             $billing->billing_date = $request->billing_date;
             $billing->total_amount = $request->total_amount;
             $billing->paid_amount = $request->paid_amount;
-            $billing->remaining_amount = $request->remaining_amount;
+            $billing->adjustment_amount = $adjustmentAmount;
+            $billing->adjustment_note = $request->adjustment_note;
+            $billing->remaining_amount = $request->total_amount - $adjustmentAmount - $request->paid_amount;
 
             $billing->status =
-                $request->remaining_amount == 0
+                $billing->remaining_amount <= 0
                 ? 'paid'
-                : ($request->paid_amount > 0 ? 'partial' : 'unpaid');
+                : ($request->paid_amount > 0 || $adjustmentAmount > 0 ? 'partial' : 'unpaid');
 
             $billing->description = $request->description;
             $billing->save();
