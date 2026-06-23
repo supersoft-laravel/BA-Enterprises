@@ -207,6 +207,13 @@
         <span>{{ \App\Helpers\Helper::formatCurrency($billing->total_amount) }}</span>
     </div>
 
+    @if(($billing->adjustment_amount ?? 0) > 0)
+    <div class="total-row">
+        <span>ADJUSTMENT ({{ $billing->adjustment_note ?? 'Counter Bill' }}):</span>
+        <span>- {{ \App\Helpers\Helper::formatCurrency($billing->adjustment_amount) }}</span>
+    </div>
+    @endif
+
     {{-- PAID (only if something paid) --}}
     @if($billing->paid_amount > 0)
     <div class="total-row">

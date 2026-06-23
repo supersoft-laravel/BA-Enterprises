@@ -310,8 +310,15 @@
                     <td class="text-right"><strong>{{ \App\Helpers\Helper::formatCurrency($billing->total_amount) }}</strong></td>
                 </tr>
 
+                @if(($billing->adjustment_amount ?? 0) > 0)
                 <tr class="total-row">
-                    <td colspan="2" class="text-right"><strong>Paid Amount</strong></td>
+                    <td colspan="2" class="text-right"><strong>Adjustment ({{ $billing->adjustment_note ?? 'Counter Bill' }})</strong></td>
+                    <td class="text-right"><strong style="color:#856404;">- {{ \App\Helpers\Helper::formatCurrency($billing->adjustment_amount) }}</strong></td>
+                </tr>
+                @endif
+
+                <tr class="total-row">
+                    <td colspan="2" class="text-right"><strong>Paid Amount (Cash)</strong></td>
                     <td class="text-right"><strong>{{ \App\Helpers\Helper::formatCurrency($billing->paid_amount) }}</strong></td>
                 </tr>
 

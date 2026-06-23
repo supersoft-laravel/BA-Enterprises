@@ -492,14 +492,12 @@
             <span>TOTAL:</span>
             <span class="blade-placeholder">{{ \App\Helpers\Helper::formatCurrency($billing->total_amount) }}</span>
         </div>
-        {{-- <div class="total-row">
-            <span class="total-label">TOTAL:</span>
-            <span class="blade-placeholder">{{ \App\Helpers\Helper::formatCurrency($billing->total_amount) }}</span>
-        </div>
+        @if(($billing->adjustment_amount ?? 0) > 0)
         <div class="total-row">
-            <span class="total-label">PAID:</span>
-            <span class="blade-placeholder">{{ \App\Helpers\Helper::formatCurrency($billing->paid_amount) }}</span>
-        </div> --}}
+            <span>ADJUSTMENT ({{ $billing->adjustment_note ?? 'Counter Bill' }}):</span>
+            <span>- {{ \App\Helpers\Helper::formatCurrency($billing->adjustment_amount) }}</span>
+        </div>
+        @endif
 
         <!-- ===== PAYMENT HISTORY ===== -->
         @if(isset($payments) && $payments->count() > 0)
