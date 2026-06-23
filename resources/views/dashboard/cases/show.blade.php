@@ -789,6 +789,33 @@
         svcTypeEl.value = '';
         destroyAllPickers();
     });
+
+    // Submit via AJAX so the reload uses replace() — prevents extra history entries
+    const addServiceForm = document.getElementById('addServiceForm');
+    if (addServiceForm) {
+        addServiceForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const submitBtn = addServiceForm.querySelector('button[type="submit"]');
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving...'; }
+
+            const formData = new FormData(addServiceForm);
+
+            fetch(addServiceForm.action, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            })
+            .then(function (response) {
+                // Replace current history entry so Back works in 1 click
+                window.location.replace(window.location.href);
+            })
+            .catch(function () {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Add Service'; }
+                alert('Something went wrong. Please try again.');
+            });
+        });
+    }
 })();
 </script>
 @endsection
