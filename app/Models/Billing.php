@@ -21,6 +21,8 @@ class Billing extends Model
         'total_amount',
         'paid_amount',
         'remaining_amount',
+        'adjustment_amount',
+        'adjustment_note',
         'billing_date',
         'billing_name',
         'description',
