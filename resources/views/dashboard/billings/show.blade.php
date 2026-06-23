@@ -115,37 +115,53 @@
             font-size: 10px;
         }
 
-        .items-header {
-            display: flex;
-            justify-content: space-between;
-            font-weight: bold;
-            border-bottom: 1px solid #000;
-            padding-bottom: 2px;
-            margin-bottom: 2px;
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
         }
 
-        .item-row {
+        .items-table th {
+            font-weight: bold;
+            border-bottom: 1px solid #000;
+            padding: 2px 3px;
+            text-align: left;
+        }
+
+        .items-table th:last-child { text-align: right; }
+
+        .items-table td {
+            padding: 2px 3px;
+            vertical-align: top;
+        }
+
+        .items-table td:last-child { text-align: right; font-weight: bold; }
+
+        .items-table tr.vehicle-group td {
+            border-top: 1px dashed #888;
+        }
+
+        .vehicle-cell {
+            font-weight: bold;
+            white-space: nowrap;
+            padding-right: 4px;
+            vertical-align: middle;
+        }
+
+        .service-line {
             display: flex;
-            justify-content: space-between;
+            align-items: baseline;
             margin: 2px 0;
         }
 
-        .item-name {
+        .service-name { white-space: nowrap; }
+        .service-dots {
             flex: 1;
+            border-bottom: 1px dotted #555;
+            margin: 0 4px 2px;
+            min-width: 8px;
         }
-
-        .item-vehicle {
-            flex: 1;
-            text-align: center;
-            font-size: 10px;
-            color: #555;
-        }
-
-        .item-amount {
-            flex: 1;
-            text-align: right;
-            font-weight: bold;
-        }
+        .service-amt  { font-weight: bold; white-space: nowrap; }
 
         /* ===== TOTALS ===== */
         .total-row {
@@ -432,25 +448,40 @@
 
         <!-- ===== ITEMS ===== -->
         <div class="items">
-            <div class="items-header">
-                <span style="flex:1;">DESCRIPTION</span>
-                <span style="flex:1;text-align:center;">VEHICLE NO</span>
-                <span style="flex:1;text-align:right;">AMT (PKR)</span>
-            </div>
+            @php
+                $grouped = ($billing->items ?? collect())->groupBy('vehicle_case_id');
+            @endphp
 
-            @forelse($billing->items ?? [] as $item)
-                <div class="item-row">
-                    <span class="item-name blade-placeholder">{{ Str::limit($item->item_name, 22) }}</span>
-                    <span class="item-vehicle blade-placeholder">{{ $item->vehicleCase->vehicle_no ?? '—' }}</span>
-                    <span class="item-amount blade-placeholder">{{ \App\Helpers\Helper::formatCurrency($item->item_amount) }}</span>
-                </div>
-            @empty
-                <div class="item-row">
-                    <span class="item-name">No items found</span>
-                    <span class="item-vehicle">—</span>
-                    <span class="item-amount">0.00</span>
-                </div>
-            @endforelse
+            @if($grouped->isEmpty())
+                <div style="font-size:10px;text-align:center;padding:4px 0;">No items found</div>
+            @else
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th style="width:35%;">VEHICLE NO</th>
+                            <th>SERVICES &amp; AMOUNT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($grouped as $caseId => $items)
+                            <tr class="vehicle-group">
+                                <td class="vehicle-cell">
+                                    {{ $items->first()->vehicleCase?->vehicle_no ?? '—' }}
+                                </td>
+                                <td>
+                                    @foreach($items as $item)
+                                        <div class="service-line">
+                                            <span class="service-name">{{ $item->item_name }}</span>
+                                            <span class="service-dots"></span>
+                                            <span class="service-amt">{{ \App\Helpers\Helper::formatCurrency($item->item_amount) }}</span>
+                                        </div>
+                                    @endforeach
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
         </div>
 
         {{-- <div class="separator"></div> --}}
