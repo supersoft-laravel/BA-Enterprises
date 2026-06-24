@@ -379,6 +379,12 @@
             <strong>Terms & Conditions:</strong> Payment is due within 30 days. Late payments may incur additional charges.
         </div> --}}
 
+        @if($billing->description)
+        <div style="margin-top:15px; padding:8px; border:1px solid #ddd; font-size:12px;">
+            <strong>Note:</strong> {{ $billing->description }}
+        </div>
+        @endif
+
         <!-- FOOTER -->
         <div class="footer">
             <div>
@@ -387,8 +393,10 @@
                 <br><br>
                 <strong>Scan this QR code to verify the bill</strong><br>
                 <small style="font-size: 10px;">{{ route('frontend.billing.verify', $billing->bill_no ?? $billing->id) }}</small>
-                <br><br>
-                Thank you for your business!
+                <br>
+                <span dir="rtl" style="font-family:serif; font-size:11px; line-height:1.6; display:block; text-align:right;">
+                    اپنے متعلقہ دستاویزات ایک ماہ کے اندر وصول کر لیں۔ مقررہ مدت کے بعد دستاویزات کی ذمہ داری کمپنی پر عائد نہیں ہوگی۔
+                </span>
             </div>
 
             <div class="signature">

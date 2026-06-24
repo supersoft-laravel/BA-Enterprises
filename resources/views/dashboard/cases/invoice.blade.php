@@ -222,18 +222,15 @@
 
     {{-- FOOTER --}}
     <div class="footer">
-        <div class="footer-note">* Goods once sold will not be taken back</div>
-        <div class="footer-note">* Subject to Karachi jurisdiction only</div>
-        <div class="footer-note">* Please retain this receipt for warranty</div>
-
         <div class="signature-line">
             <div class="signature-box">Customer Signature</div>
             <div class="signature-box">Authorized Signatory</div>
         </div>
 
         <div class="separator"></div>
-        <div class="footer-note">Thank you for your business!</div>
-        <div class="footer-note no-print">[ Ctrl+P to print ]</div>
+        <div class="footer-note" dir="rtl" style="font-family:serif; font-size:9px; line-height:1.6;">
+            اپنے متعلقہ دستاویزات ایک ماہ کے اندر وصول کر لیں۔ مقررہ مدت کے بعد دستاویزات کی ذمہ داری کمپنی پر عائد نہیں ہوگی۔
+        </div>
     </div>
 
 </div>
