@@ -3,6 +3,13 @@
 @section('title', __('Edit Billing'))
 
 @section('css')
+<style>
+    tr.row-deleted td { background:#fff5f5 !important; text-decoration:line-through; color:#999; }
+    tr.row-deleted .badge { opacity:0.5; }
+    tr.row-deleted .item-amount { background:#fff5f5; color:#bbb; }
+    .btn-delete-row { padding:2px 8px; font-size:0.75rem; }
+    #deletionNotice { display:none; }
+</style>
 @endsection
 
 @section('breadcrumb-items')
@@ -85,12 +92,19 @@
                                     placeholder="Search by vehicle number..." style="max-width:280px;" autocomplete="off">
                                 <span id="vehicleSearchCount" class="text-muted" style="font-size:0.82rem;white-space:nowrap;"></span>
                             </div>
+
+                            <div id="deletionNotice" class="alert alert-warning py-2 mb-2" style="font-size:0.83rem;">
+                                <i class="ti ti-alert-triangle me-1"></i>
+                                <span id="deletionCount">0</span> service(s) marked for deletion — will be removed on save.
+                            </div>
+
                             <table class="table table-bordered" id="itemsTable">
                                 <thead>
                                     <tr>
                                         <th>Vehicle No</th>
                                         <th>Item</th>
                                         <th width="200">Amount</th>
+                                        <th width="80" class="text-center">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -110,6 +124,12 @@
                                                 <input type="number" class="form-control item-amount"
                                                     name="items[{{ $index }}][amount]"
                                                     value="{{ $item->item_amount }}" step="0.01">
+                                            </td>
+                                            <td class="text-center" style="vertical-align:middle;">
+                                                <button type="button" class="btn btn-sm btn-outline-danger btn-delete-row"
+                                                    title="Mark for deletion">
+                                                    <i class="ti ti-trash ti-xs"></i>
+                                                </button>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -161,6 +181,46 @@
     <script>
         $(document).ready(function() {
 
+            // SOFT DELETE ROWS
+            $(document).on('click', '.btn-delete-row', function() {
+                const $row = $(this).closest('tr');
+                const totalRows = $('#itemsTable tbody tr').length;
+                const deletedRows = $('#itemsTable tbody tr.row-deleted').length;
+
+                if ($row.hasClass('row-deleted')) {
+                    // UNDO
+                    $row.removeClass('row-deleted');
+                    $row.find('input').prop('disabled', false);
+                    $(this).html('<i class="ti ti-trash ti-xs"></i>').removeClass('btn-warning').addClass('btn-outline-danger');
+                    $(this).attr('title', 'Mark for deletion');
+                } else {
+                    // Cannot delete the last active row
+                    const activeRows = totalRows - deletedRows;
+                    if (activeRows <= 1) {
+                        alert('At least one service must remain on the bill.');
+                        return;
+                    }
+                    // SOFT DELETE
+                    $row.addClass('row-deleted');
+                    $row.find('input').prop('disabled', true);
+                    $(this).html('<i class="ti ti-arrow-back-up ti-xs"></i> Undo').removeClass('btn-outline-danger').addClass('btn-warning');
+                    $(this).attr('title', 'Undo deletion');
+                }
+
+                updateDeletionNotice();
+                calculateTotal();
+            });
+
+            function updateDeletionNotice() {
+                const count = $('#itemsTable tbody tr.row-deleted').length;
+                if (count > 0) {
+                    $('#deletionCount').text(count);
+                    $('#deletionNotice').show();
+                } else {
+                    $('#deletionNotice').hide();
+                }
+            }
+
             // VEHICLE SEARCH FILTER
             $('#vehicleSearch').on('input', function() {
                 const query = $(this).val().trim().toLowerCase();
@@ -176,8 +236,8 @@
                     }
                 });
 
-                const total = $('#itemsTable tbody tr').length;
-                $('#vehicleSearchCount').text(query ? visible + ' of ' + total + ' rows' : '');
+                const total = $('#itemsTable tbody tr:not(.row-deleted)').length;
+                $('#vehicleSearchCount').text(query ? visible + ' of ' + total + ' active rows' : '');
             });
 
             // TOTAL CALC
@@ -192,7 +252,7 @@
             function calculateTotal() {
                 let total = 0;
 
-                $('.item-amount').each(function() {
+                $('.item-amount:not(:disabled)').each(function() {
                     total += parseFloat($(this).val()) || 0;
                 });
 
