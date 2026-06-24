@@ -131,9 +131,9 @@
                             @enderror
                         </div>
                         <div class="mb-4 col-md-12">
-                            <label for="description" class="form-label">{{ __('Description') }}</label>
+                            <label for="description" class="form-label">{{ __('Note') }}</label>
                             <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description"
-                                placeholder="{{ __('Enter description') }}">{{ old('description') }}</textarea>
+                                placeholder="{{ __('Enter note (optional)') }}">{{ old('description') }}</textarea>
                             @error('description')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>

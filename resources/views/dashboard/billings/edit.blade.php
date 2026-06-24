@@ -158,10 +158,10 @@
                                 value="{{ $billing->remaining_amount }}" step="0.01">
                         </div>
 
-                        {{-- DESCRIPTION --}}
+                        {{-- NOTE --}}
                         <div class="mb-4 col-md-12">
-                            <label class="form-label">{{ __('Description') }}</label>
-                            <textarea name="description" class="form-control">{{ $billing->description }}</textarea>
+                            <label class="form-label">{{ __('Note') }}</label>
+                            <textarea name="description" class="form-control" placeholder="Enter note (optional)">{{ $billing->description }}</textarea>
                         </div>
 
                     </div>
